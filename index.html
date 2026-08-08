@@ -5,319 +5,189 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Church Study Guide Maker</title>
 <style>
-  /* ============================================================
-     THEME TOKENS  — edit these to restyle the whole document
-     ============================================================ */
   :root {
-    --ink:        #1f2430;   /* main text */
-    --ink-soft:   #4a5163;   /* secondary text */
-    --paper:      #ffffff;   /* guide background */
-    --app-bg:     #eef1f6;   /* app background */
-    --primary:    #3a4a7a;   /* headings / accents (deep indigo) */
-    --primary-2:  #556199;
-    --accent:     #b07a2f;   /* warm gold accent */
-    --leader-bg:  #fbf5e9;   /* leader-note callout background */
-    --leader-br:  #d9b676;   /* leader-note callout border */
-    --rule:       #c9cfdd;   /* horizontal block dividers */
-    --line:       #dde1ea;   /* light borders */
-    --serif:      Georgia, "Times New Roman", serif;
-    --sans:       system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --radius:     10px;
+    --ink: #1f2430; --ink-soft: #4a5163;
+    --primary: #3a4a7a; --primary-2: #556199; --accent: #b07a2f;
+    --bg: #eef1f6; --card: #ffffff; --line: #dde1ea;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --radius: 10px;
   }
-
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    font-family: var(--sans);
-    background: var(--app-bg);
-    color: var(--ink);
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
+  body { margin: 0; font-family: var(--sans); background: var(--bg); color: var(--ink); }
 
-  /* ============================================================
-     APP CHROME (hidden when printing)
-     ============================================================ */
-  .toolbar {
-    position: sticky; top: 0; z-index: 50;
-    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-    padding: 10px 16px;
-    background: var(--primary);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  header.top {
+    background: var(--primary); color: #fff; padding: 22px 20px; text-align: center;
   }
-  .toolbar .brand {
-    font-weight: 700; font-size: 15px; letter-spacing: .3px;
-    margin-right: auto; display: flex; align-items: center; gap: 8px;
-  }
-  .toolbar .brand span { font-size: 20px; }
-  .btn {
-    font: inherit; font-size: 13px; font-weight: 600;
-    padding: 7px 12px; border-radius: 7px; border: 1px solid rgba(255,255,255,.25);
-    background: rgba(255,255,255,.12); color: #fff; cursor: pointer;
-    transition: background .15s ease;
-  }
-  .btn:hover { background: rgba(255,255,255,.24); }
-  .btn.primary { background: var(--accent); border-color: var(--accent); }
-  .btn.primary:hover { filter: brightness(1.08); }
-  .btn.ghost { background: transparent; }
+  header.top h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: .3px; }
+  header.top p { margin: 0; opacity: .9; font-size: 14px; }
 
-  .layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 0;
-    height: calc(100vh - 55px);
-  }
-  @media (max-width: 900px) {
-    .layout { grid-template-columns: 1fr; height: auto; }
-    .preview-pane { border-left: none; border-top: 1px solid var(--line); }
-  }
-
-  /* ---------- EDITOR ---------- */
-  .editor-pane { overflow-y: auto; padding: 20px 20px 120px; }
-  .preview-pane { overflow-y: auto; border-left: 1px solid var(--line); background: #f4f6fa; padding: 24px; }
+  form { max-width: 780px; margin: 24px auto 120px; padding: 0 16px; }
 
   .hint {
     background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 12px 14px; font-size: 13px; color: var(--ink-soft); margin-bottom: 18px;
-    line-height: 1.5;
+    padding: 12px 14px; font-size: 13px; color: var(--ink-soft); margin-bottom: 20px; line-height: 1.5;
   }
 
   fieldset {
     border: 1px solid var(--line); border-radius: var(--radius);
-    margin: 0 0 18px; padding: 14px 16px 16px; background: #fff;
+    margin: 0 0 20px; padding: 16px 18px 18px; background: var(--card);
   }
   legend {
     font-weight: 700; color: var(--primary); padding: 0 8px; font-size: 14px;
     text-transform: uppercase; letter-spacing: .6px;
   }
-  label.field { display: block; margin: 10px 0 4px; font-size: 12px; font-weight: 700;
+  label.field { display: block; margin: 12px 0 4px; font-size: 12px; font-weight: 700;
     color: var(--ink-soft); text-transform: uppercase; letter-spacing: .4px; }
   input[type=text], textarea {
     width: 100%; font: inherit; font-size: 14px; color: var(--ink);
-    padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: #fff;
-    resize: vertical;
+    padding: 9px 11px; border: 1px solid var(--line); border-radius: 7px; background: #fff; resize: vertical;
   }
   input[type=text]:focus, textarea:focus { outline: 2px solid var(--primary-2); border-color: var(--primary-2); }
-  textarea { min-height: 64px; line-height: 1.45; }
+  textarea { min-height: 68px; line-height: 1.45; }
 
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 520px) { .row2 { grid-template-columns: 1fr; } }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
 
-  .list-item {
-    display: flex; gap: 8px; align-items: flex-start; margin-top: 8px;
-  }
+  .list-item { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
   .list-item textarea, .list-item input { flex: 1; }
   .icon-btn {
     flex: 0 0 auto; border: 1px solid var(--line); background: #fff; color: #b23c3c;
-    border-radius: 7px; width: 34px; height: 34px; cursor: pointer; font-size: 16px; line-height: 1;
+    border-radius: 7px; width: 36px; height: 36px; cursor: pointer; font-size: 17px; line-height: 1;
   }
   .icon-btn:hover { background: #fdeaea; }
   .add-btn {
     margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--primary);
     background: #eef1fb; border: 1px dashed var(--primary-2); border-radius: 7px;
-    padding: 7px 12px; cursor: pointer;
+    padding: 8px 12px; cursor: pointer;
   }
   .add-btn:hover { background: #e3e8fa; }
 
   .segment {
     border: 1px solid var(--line); border-left: 4px solid var(--primary-2);
-    border-radius: var(--radius); padding: 12px 14px 14px; margin-top: 12px; background: #fbfcfe;
+    border-radius: var(--radius); padding: 14px 16px 16px; margin-top: 14px; background: #fbfcfe;
   }
-  .segment-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .segment-head { display: flex; align-items: center; justify-content: space-between; }
   .segment-head h4 { margin: 0; color: var(--primary); font-size: 14px; }
   .sub-legend { font-size: 11px; font-weight: 700; color: var(--accent);
-    text-transform: uppercase; letter-spacing: .5px; margin: 12px 0 2px; }
+    text-transform: uppercase; letter-spacing: .5px; margin: 14px 0 2px; }
 
-  .save-state { font-size: 12px; opacity: .85; margin-left: 4px; }
-
-  /* ============================================================
-     THE GUIDE (this is what prints)
-     ============================================================ */
-  .guide-wrap { max-width: 720px; margin: 0 auto; }
-  .guide {
-    background: var(--paper); color: var(--ink);
-    font-family: var(--serif); line-height: 1.6; font-size: 16px;
-    padding: 48px 54px; border-radius: 6px;
-    box-shadow: 0 4px 24px rgba(30,40,80,.12);
+  .actions {
+    position: sticky; bottom: 0; background: linear-gradient(to top, var(--bg) 70%, transparent);
+    padding: 16px 0 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
   }
-
-  .guide hr.block-rule {
-    border: none; border-top: 2px solid var(--rule);
-    margin: 30px 0;
+  .btn {
+    font: inherit; font-size: 15px; font-weight: 700; padding: 12px 22px; border-radius: 9px;
+    border: none; cursor: pointer;
   }
+  .btn.primary { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(176,122,47,.35); }
+  .btn.primary:hover { filter: brightness(1.07); }
+  .btn.ghost { background: #fff; color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn.ghost:hover { background: #f4f6fa; }
 
-  /* Title block */
-  .g-title { text-align: center; }
-  .g-title .study { font-size: 30px; font-weight: 700; color: var(--primary); margin: 0 0 4px; line-height: 1.2; }
-  .g-title .meta { font-family: var(--sans); font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--accent); font-weight: 700; margin: 6px 0 14px; }
-  .g-title .desc { font-style: italic; color: var(--ink-soft); font-size: 17px; max-width: 34em; margin: 0 auto; }
-
-  /* Section heading */
-  .g-h {
-    font-family: var(--sans); font-size: 13px; font-weight: 800; letter-spacing: 1.5px;
-    text-transform: uppercase; color: var(--primary);
-    display: flex; align-items: center; gap: 10px; margin: 0 0 12px;
+  .toast {
+    position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
+    background: var(--primary); color: #fff; padding: 12px 20px; border-radius: 30px;
+    font-size: 14px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
   }
-  .g-h::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-
-  .g-label { font-family: var(--sans); font-size: 11px; font-weight: 800; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--accent); margin: 14px 0 3px; }
-
-  .g-list { margin: 4px 0 0; padding-left: 22px; }
-  .g-list li { margin: 5px 0; }
-
-  .icebreaker { background: #f3f6ff; border-radius: 8px; padding: 10px 14px; }
-
-  .focus-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px; }
-  @media (max-width: 520px) { .focus-grid { grid-template-columns: 1fr; } }
-  .focus-card { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; background: #fafbfe; }
-  .focus-card .cap { font-family: var(--sans); font-size: 11px; font-weight: 800; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--primary); margin-bottom: 4px; }
-
-  /* Body segment */
-  .seg-passage { font-size: 20px; font-weight: 700; color: var(--primary); margin: 0 0 2px; }
-  .seg-read { font-family: var(--sans); font-size: 12px; color: var(--ink-soft); font-style: italic; margin: 0 0 10px; }
-
-  .leader-note {
-    background: var(--leader-bg); border: 1px solid var(--leader-br); border-left: 4px solid var(--accent);
-    border-radius: 8px; padding: 10px 14px; margin: 6px 0;
-  }
-  .leader-note .cap { font-family: var(--sans); font-size: 11px; font-weight: 800; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
-
-  .transition { font-style: italic; color: var(--ink-soft); }
-
-  .related { font-family: var(--sans); font-size: 13px; color: var(--ink-soft); }
-  .related .chip { display: inline-block; background: #eef1fb; color: var(--primary);
-    border-radius: 20px; padding: 2px 10px; margin: 2px 4px 2px 0; font-weight: 600; }
-
-  .seg-divider { border: none; border-top: 1px dashed var(--line); margin: 22px 0; }
-
-  .empty-note { color: #b0b6c4; font-style: italic; }
-  p.g-p { margin: 4px 0 0; white-space: pre-wrap; }
-
-  /* ============================================================
-     PRINT
-     ============================================================ */
-  @media print {
-    .toolbar, .editor-pane, .hint { display: none !important; }
-    .layout { display: block; height: auto; }
-    .preview-pane { border: none; background: #fff; padding: 0; overflow: visible; }
-    .guide-wrap { max-width: none; }
-    .guide { box-shadow: none; border-radius: 0; padding: 0; font-size: 12pt; }
-    .guide hr.block-rule { margin: 22px 0; }
-    .segment, .focus-card, .leader-note, .icebreaker { break-inside: avoid; }
-    @page { margin: 18mm 16mm; }
-  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 
-<div class="toolbar">
-  <div class="brand"><span>✝️</span> Study Guide Maker <span class="save-state" id="saveState"></span></div>
-  <button class="btn ghost" id="btnExample" title="Load the built-in example so you can see the format">Load Example</button>
-  <button class="btn ghost" id="btnNew" title="Clear everything and start a blank guide">New / Clear</button>
-  <button class="btn ghost" id="btnOpen" title="Open a saved guide or template (.json)">Open…</button>
-  <button class="btn" id="btnSave" title="Save this guide as a file you can reuse">Save Guide</button>
-  <button class="btn primary" id="btnPrint" title="Print or save as PDF">Print / PDF</button>
-  <input type="file" id="fileInput" accept="application/json,.json" style="display:none" />
-</div>
+<header class="top">
+  <h1>✝️ Church Study Guide Maker</h1>
+  <p>Fill in tonight's guide, then download it as a Word document.</p>
+</header>
 
-<div class="layout">
-  <!-- ================= EDITOR ================= -->
-  <div class="editor-pane">
-    <div class="hint">
-      <strong>How this works:</strong> Fill in the fields on the left — the guide on the right updates as you type.
-      Your work auto-saves in this browser. Click <strong>Save Guide</strong> to download a <code>.json</code> file
-      you can reopen next week and edit. Use <strong>Load Example</strong> any time to see how each part should look.
-      When you're ready, <strong>Print / PDF</strong> gives you a clean handout.
-    </div>
-
-    <!-- 1. TITLE -->
-    <fieldset>
-      <legend>1 · Title</legend>
-      <div class="row2">
-        <div>
-          <label class="field">What we're studying</label>
-          <input type="text" data-bind="study" placeholder="e.g. The Book of James" />
-        </div>
-        <div>
-          <label class="field">Week</label>
-          <input type="text" data-bind="week" placeholder="e.g. Week 3 · Aug 12, 2026" />
-        </div>
-      </div>
-      <label class="field">Topical description of the night</label>
-      <textarea data-bind="description" placeholder="A sentence or two on tonight's theme."></textarea>
-    </fieldset>
-
-    <!-- 2. WEEKLY UPDATES -->
-    <fieldset>
-      <legend>2 · Weekly Updates</legend>
-
-      <label class="field">Church announcements</label>
-      <div id="announcements"></div>
-      <button class="add-btn" data-add="announcements">+ Add announcement</button>
-
-      <label class="field" style="margin-top:16px">Ice breaker</label>
-      <textarea data-bind="iceBreaker" placeholder="A fun question or activity to open the night."></textarea>
-
-      <div class="row2" style="margin-top:6px">
-        <div>
-          <label class="field">Last week's inward focus</label>
-          <textarea data-bind="focusInward" placeholder="The inward growth focus we set last week."></textarea>
-        </div>
-        <div>
-          <label class="field">Last week's outward focus</label>
-          <textarea data-bind="focusOutward" placeholder="The outward growth focus we set last week."></textarea>
-        </div>
-      </div>
-    </fieldset>
-
-    <!-- 3. BODY -->
-    <fieldset>
-      <legend>3 · Body — Scripture Segments</legend>
-      <div id="segments"></div>
-      <button class="add-btn" data-add="segments">+ Add scripture segment</button>
-    </fieldset>
-
-    <!-- 4. CLOSING PRAYER -->
-    <fieldset>
-      <legend>4 · Closing Prayer Points</legend>
-      <div id="prayerPoints"></div>
-      <button class="add-btn" data-add="prayerPoints">+ Add prayer point</button>
-    </fieldset>
-
-    <!-- 5. NEXT WEEK GROWTH -->
-    <fieldset>
-      <legend>5 · Growth Steps for Next Week</legend>
-      <div class="row2">
-        <div>
-          <label class="field">Inward growth step</label>
-          <textarea data-bind="nextInward" placeholder="What we'll focus on inwardly this coming week."></textarea>
-        </div>
-        <div>
-          <label class="field">Outward growth step</label>
-          <textarea data-bind="nextOutward" placeholder="What we'll focus on outwardly this coming week."></textarea>
-        </div>
-      </div>
-    </fieldset>
+<form id="guideForm">
+  <div class="hint">
+    The fields below are pre-filled with an example so you can see what goes where — just replace
+    the text with your own. Use <strong>+ Add</strong> buttons for extra announcements, scripture
+    segments, questions, verses, or prayer points. When you're done, click
+    <strong>Download Word Document</strong> at the bottom. Every section becomes a block separated
+    by a horizontal line in the finished <code>.doc</code>.
   </div>
 
-  <!-- ================= PREVIEW ================= -->
-  <div class="preview-pane">
-    <div class="guide-wrap">
-      <div class="guide" id="guide"></div>
+  <!-- 1. TITLE -->
+  <fieldset>
+    <legend>1 · Title</legend>
+    <div class="row2">
+      <div>
+        <label class="field" for="study">What we're studying</label>
+        <input type="text" id="study" name="study" />
+      </div>
+      <div>
+        <label class="field" for="week">Week</label>
+        <input type="text" id="week" name="week" />
+      </div>
     </div>
+    <label class="field" for="description">Topical description of the night</label>
+    <textarea id="description" name="description"></textarea>
+  </fieldset>
+
+  <!-- 2. WEEKLY UPDATES -->
+  <fieldset>
+    <legend>2 · Weekly Updates</legend>
+    <label class="field">Church announcements</label>
+    <div id="announcements"></div>
+    <button type="button" class="add-btn" data-add="announcements">+ Add announcement</button>
+
+    <label class="field" for="iceBreaker" style="margin-top:16px">Ice breaker</label>
+    <textarea id="iceBreaker" name="iceBreaker"></textarea>
+
+    <div class="row2" style="margin-top:6px">
+      <div>
+        <label class="field" for="focusInward">Last week's inward focus</label>
+        <textarea id="focusInward" name="focusInward"></textarea>
+      </div>
+      <div>
+        <label class="field" for="focusOutward">Last week's outward focus</label>
+        <textarea id="focusOutward" name="focusOutward"></textarea>
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- 3. BODY -->
+  <fieldset>
+    <legend>3 · Body — Scripture Segments</legend>
+    <div id="segments"></div>
+    <button type="button" class="add-btn" data-add="segments">+ Add scripture segment</button>
+  </fieldset>
+
+  <!-- 4. CLOSING PRAYER -->
+  <fieldset>
+    <legend>4 · Closing Prayer Points</legend>
+    <div id="prayerPoints"></div>
+    <button type="button" class="add-btn" data-add="prayerPoints">+ Add prayer point</button>
+  </fieldset>
+
+  <!-- 5. NEXT WEEK GROWTH -->
+  <fieldset>
+    <legend>5 · Growth Steps for Next Week</legend>
+    <div class="row2">
+      <div>
+        <label class="field" for="nextInward">Inward growth step</label>
+        <textarea id="nextInward" name="nextInward"></textarea>
+      </div>
+      <div>
+        <label class="field" for="nextOutward">Outward growth step</label>
+        <textarea id="nextOutward" name="nextOutward"></textarea>
+      </div>
+    </div>
+  </fieldset>
+
+  <div class="actions">
+    <button type="button" class="btn ghost" id="btnClear">Clear Form</button>
+    <button type="submit" class="btn primary">⬇ Download Word Document</button>
   </div>
-</div>
+</form>
+
+<div class="toast" id="toast"></div>
 
 <script>
 /* =====================================================================
-   DATA MODEL + EXAMPLE TEMPLATE
-   The example doubles as the editable template: it shows exactly what
-   each field is for. "Load Example" restores it at any time.
+   EXAMPLE CONTENT (pre-fills the form as an editable template)
    ===================================================================== */
 const EXAMPLE = {
   study: "The Book of James",
@@ -368,337 +238,287 @@ const EXAMPLE = {
 
 const BLANK = {
   study: "", week: "", description: "",
-  announcements: [""],
-  iceBreaker: "", focusInward: "", focusOutward: "",
-  segments: [ newSegment() ],
-  prayerPoints: [""],
-  nextInward: "", nextOutward: ""
+  announcements: [""], iceBreaker: "", focusInward: "", focusOutward: "",
+  segments: [newSegment()], prayerPoints: [""], nextInward: "", nextOutward: ""
 };
-
 function newSegment() {
   return { passage: "", summary: "", leaderNotes: "", transition: "", questions: [""], relatedVerses: [""] };
 }
 
 /* =====================================================================
-   STATE + PERSISTENCE
+   BUILD THE FORM FROM A DATA OBJECT
    ===================================================================== */
-const STORAGE_KEY = "churchStudyGuide.v1";
-let data = load() || structuredClone(EXAMPLE);
+function fillForm(d) {
+  ["study","week","description","iceBreaker","focusInward","focusOutward","nextInward","nextOutward"]
+    .forEach(k => { document.getElementById(k).value = d[k] || ""; });
+  renderStringList("announcements", d.announcements, "One announcement…");
+  renderStringList("prayerPoints", d.prayerPoints, "One prayer point…");
+  renderSegments(d.segments);
+}
 
-function load() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
+function renderStringList(containerId, arr, placeholder) {
+  const box = document.getElementById(containerId);
+  box.innerHTML = "";
+  (arr && arr.length ? arr : [""]).forEach(val => box.appendChild(stringItem(containerId, val, placeholder)));
 }
-let saveTimer;
-function persist() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      flashSaved();
-    } catch (e) {}
-  }, 250);
+function stringItem(containerId, val, placeholder) {
+  const item = document.createElement("div"); item.className = "list-item";
+  const ta = document.createElement("textarea"); ta.rows = 2; ta.value = val || ""; ta.placeholder = placeholder;
+  ta.setAttribute("data-list", containerId);
+  const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove";
+  rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.children.length) box.appendChild(stringItem(containerId, "", placeholder)); });
+  item.append(ta, rm); return item;
 }
-function flashSaved() {
-  const el = document.getElementById("saveState");
-  el.textContent = "· saved";
-  clearTimeout(flashSaved._t);
-  flashSaved._t = setTimeout(() => { el.textContent = ""; }, 1200);
+
+function renderSegments(arr) {
+  const box = document.getElementById("segments"); box.innerHTML = "";
+  (arr && arr.length ? arr : [newSegment()]).forEach(seg => box.appendChild(segmentEl(seg)));
+}
+function segmentEl(seg) {
+  const wrap = document.createElement("div"); wrap.className = "segment"; wrap.setAttribute("data-segment", "");
+
+  const head = document.createElement("div"); head.className = "segment-head";
+  const h = document.createElement("h4"); h.textContent = "Segment";
+  const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove segment";
+  rm.addEventListener("click", () => { const box = wrap.parentElement; wrap.remove(); renumberSegments(); if (!box.children.length) box.appendChild(segmentEl(newSegment())); });
+  head.append(h, rm); wrap.appendChild(head);
+
+  wrap.appendChild(fieldInput("passage", "Scripture to read", seg.passage, "e.g. James 1:2–8"));
+  wrap.appendChild(fieldArea("summary", "Summary of the passage", seg.summary));
+  wrap.appendChild(fieldArea("leaderNotes", "Key notes for leaders", seg.leaderNotes));
+  wrap.appendChild(fieldArea("transition", "Transition into the questions", seg.transition));
+
+  wrap.appendChild(subLegend("Questions to ask"));
+  wrap.appendChild(nestedList("questions", seg.questions, "Type a question…", false));
+
+  wrap.appendChild(subLegend("Related verses"));
+  wrap.appendChild(nestedList("relatedVerses", seg.relatedVerses, "e.g. Romans 5:3–5", true));
+
+  return wrap;
+}
+function renumberSegments() {
+  document.querySelectorAll('[data-segment] .segment-head h4').forEach((h, i) => h.textContent = "Segment " + (i + 1));
+}
+function subLegend(text) { const d = document.createElement("div"); d.className = "sub-legend"; d.textContent = text; return d; }
+function fieldInput(key, labelText, val, placeholder) {
+  const div = document.createElement("div");
+  const lab = document.createElement("label"); lab.className = "field"; lab.textContent = labelText;
+  const inp = document.createElement("input"); inp.type = "text"; inp.value = val || ""; inp.placeholder = placeholder || ""; inp.setAttribute("data-key", key);
+  div.append(lab, inp); return div;
+}
+function fieldArea(key, labelText, val) {
+  const div = document.createElement("div");
+  const lab = document.createElement("label"); lab.className = "field"; lab.textContent = labelText;
+  const ta = document.createElement("textarea"); ta.value = val || ""; ta.setAttribute("data-key", key);
+  div.append(lab, ta); return div;
+}
+function nestedList(key, arr, placeholder, short) {
+  const div = document.createElement("div"); div.setAttribute("data-nested", key);
+  (arr && arr.length ? arr : [""]).forEach(val => div.appendChild(nestedItem(key, val, placeholder, short)));
+  const add = document.createElement("button"); add.type = "button"; add.className = "add-btn";
+  add.textContent = short ? "+ Add verse" : "+ Add question";
+  add.addEventListener("click", () => div.insertBefore(nestedItem(key, "", placeholder, short), add));
+  div.appendChild(add); return div;
+}
+function nestedItem(key, val, placeholder, short) {
+  const item = document.createElement("div"); item.className = "list-item";
+  const input = short ? document.createElement("input") : document.createElement("textarea");
+  if (short) input.type = "text"; else input.rows = 2;
+  input.value = val || ""; input.placeholder = placeholder; input.setAttribute("data-item", key);
+  const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove";
+  rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.querySelector('[data-item]')) box.insertBefore(nestedItem(key, "", placeholder, short), box.querySelector('.add-btn')); });
+  item.append(input, rm); return item;
 }
 
 /* =====================================================================
-   EDITOR RENDERING
+   READ THE FORM BACK INTO A DATA OBJECT
+   ===================================================================== */
+function collect() {
+  const g = id => document.getElementById(id).value.trim();
+  const listVals = containerId => Array.from(document.querySelectorAll(`#${containerId} [data-list="${containerId}"]`)).map(el => el.value.trim()).filter(Boolean);
+
+  const segments = Array.from(document.querySelectorAll('[data-segment]')).map(seg => {
+    const val = key => { const el = seg.querySelector(`[data-key="${key}"]`); return el ? el.value.trim() : ""; };
+    const nested = key => Array.from(seg.querySelectorAll(`[data-nested="${key}"] [data-item="${key}"]`)).map(el => el.value.trim()).filter(Boolean);
+    return {
+      passage: val("passage"), summary: val("summary"), leaderNotes: val("leaderNotes"),
+      transition: val("transition"), questions: nested("questions"), relatedVerses: nested("relatedVerses")
+    };
+  }).filter(s => s.passage || s.summary || s.leaderNotes || s.transition || s.questions.length || s.relatedVerses.length);
+
+  return {
+    study: g("study"), week: g("week"), description: g("description"),
+    announcements: listVals("announcements"),
+    iceBreaker: g("iceBreaker"), focusInward: g("focusInward"), focusOutward: g("focusOutward"),
+    segments,
+    prayerPoints: listVals("prayerPoints"),
+    nextInward: g("nextInward"), nextOutward: g("nextOutward")
+  };
+}
+
+/* =====================================================================
+   BUILD THE WORD DOCUMENT (.doc = Word-compatible HTML)
    ===================================================================== */
 function esc(s) {
   return String(s == null ? "" : s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br/>");
 }
-
-// Bind simple text/textarea fields
-function bindSimpleFields() {
-  document.querySelectorAll("[data-bind]").forEach(el => {
-    const key = el.getAttribute("data-bind");
-    el.value = data[key] || "";
-    el.addEventListener("input", () => {
-      data[key] = el.value;
-      renderGuide(); persist();
-    });
-  });
-}
-
-// Generic string-list editor (announcements, prayerPoints)
-function renderStringList(containerId, key, placeholder) {
-  const box = document.getElementById(containerId);
-  box.innerHTML = "";
-  (data[key] || []).forEach((val, i) => {
-    const item = document.createElement("div");
-    item.className = "list-item";
-    const ta = document.createElement("textarea");
-    ta.rows = 2; ta.value = val; ta.placeholder = placeholder;
-    ta.addEventListener("input", () => { data[key][i] = ta.value; renderGuide(); persist(); });
-    const rm = document.createElement("button");
-    rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove";
-    rm.addEventListener("click", () => { data[key].splice(i, 1); if (!data[key].length) data[key].push(""); renderStringList(containerId, key, placeholder); renderGuide(); persist(); });
-    item.append(ta, rm);
-    box.appendChild(item);
-  });
-}
-
-// Segments editor
-function renderSegments() {
-  const box = document.getElementById("segments");
-  box.innerHTML = "";
-  data.segments.forEach((seg, i) => {
-    const wrap = document.createElement("div");
-    wrap.className = "segment";
-
-    const head = document.createElement("div");
-    head.className = "segment-head";
-    const h = document.createElement("h4");
-    h.textContent = "Segment " + (i + 1);
-    const rm = document.createElement("button");
-    rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove segment";
-    rm.addEventListener("click", () => { data.segments.splice(i, 1); if (!data.segments.length) data.segments.push(newSegment()); renderSegments(); renderGuide(); persist(); });
-    head.append(h, rm);
-    wrap.appendChild(head);
-
-    wrap.appendChild(fieldInput(seg, "passage", "Scripture to read", "e.g. James 1:2–8"));
-    wrap.appendChild(fieldArea(seg, "summary", "Summary of the passage"));
-    wrap.appendChild(fieldArea(seg, "leaderNotes", "Key notes for leaders"));
-    wrap.appendChild(fieldArea(seg, "transition", "Transition into the questions"));
-
-    // questions
-    const qLabel = document.createElement("div"); qLabel.className = "sub-legend"; qLabel.textContent = "Questions to ask";
-    wrap.appendChild(qLabel);
-    wrap.appendChild(nestedList(seg, "questions", "Type a question…"));
-
-    // related verses
-    const rLabel = document.createElement("div"); rLabel.className = "sub-legend"; rLabel.textContent = "Related verses";
-    wrap.appendChild(rLabel);
-    wrap.appendChild(nestedList(seg, "relatedVerses", "e.g. Romans 5:3–5", true));
-
-    box.appendChild(wrap);
-  });
-}
-
-function fieldInput(obj, key, labelText, placeholder) {
-  const frag = document.createDocumentFragment();
-  const lab = document.createElement("label"); lab.className = "field"; lab.textContent = labelText;
-  const inp = document.createElement("input"); inp.type = "text"; inp.value = obj[key] || ""; inp.placeholder = placeholder || "";
-  inp.addEventListener("input", () => { obj[key] = inp.value; renderGuide(); persist(); });
-  frag.append(lab, inp);
-  const div = document.createElement("div"); div.append(frag); return div;
-}
-function fieldArea(obj, key, labelText) {
-  const div = document.createElement("div");
-  const lab = document.createElement("label"); lab.className = "field"; lab.textContent = labelText;
-  const ta = document.createElement("textarea"); ta.value = obj[key] || "";
-  ta.addEventListener("input", () => { obj[key] = ta.value; renderGuide(); persist(); });
-  div.append(lab, ta); return div;
-}
-function nestedList(obj, key, placeholder, short) {
-  const div = document.createElement("div");
-  (obj[key] || []).forEach((val, i) => {
-    const item = document.createElement("div"); item.className = "list-item";
-    let input;
-    if (short) { input = document.createElement("input"); input.type = "text"; }
-    else { input = document.createElement("textarea"); input.rows = 2; }
-    input.value = val; input.placeholder = placeholder;
-    input.addEventListener("input", () => { obj[key][i] = input.value; renderGuide(); persist(); });
-    const rm = document.createElement("button"); rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove";
-    rm.addEventListener("click", () => { obj[key].splice(i, 1); if (!obj[key].length) obj[key].push(""); renderSegments(); renderGuide(); persist(); });
-    item.append(input, rm); div.appendChild(item);
-  });
-  const add = document.createElement("button");
-  add.className = "add-btn"; add.textContent = short ? "+ Add verse" : "+ Add question";
-  add.addEventListener("click", () => { obj[key].push(""); renderSegments(); renderGuide(); persist(); });
-  div.appendChild(add);
-  return div;
-}
-
-// "Add" buttons for top-level lists
-function wireAddButtons() {
-  document.querySelectorAll("[data-add]").forEach(btn => {
-    const key = btn.getAttribute("data-add");
-    btn.addEventListener("click", () => {
-      if (key === "segments") { data.segments.push(newSegment()); renderSegments(); }
-      else { data[key].push(""); renderTopLists(); }
-      renderGuide(); persist();
-    });
-  });
-}
-
-function renderTopLists() {
-  renderStringList("announcements", "announcements", "One announcement…");
-  renderStringList("prayerPoints", "prayerPoints", "One prayer point…");
-}
-
-function renderEditor() {
-  bindSimpleFields();
-  renderTopLists();
-  renderSegments();
-}
-
-/* =====================================================================
-   GUIDE (PREVIEW / PRINT) RENDERING
-   ===================================================================== */
-const RULE = '<hr class="block-rule" />';
-
 function has(v) { return v != null && String(v).trim() !== ""; }
-function cleanList(arr) { return (arr || []).map(x => (x || "").trim()).filter(Boolean); }
 
-function renderGuide() {
-  const g = document.getElementById("guide");
+const RULE = '<hr style="border:none;border-top:2px solid #c9cfdd;margin:20pt 0;" />';
+
+function buildDocHtml(d) {
+  const C = { primary: "#3a4a7a", accent: "#b07a2f", ink: "#1f2430", soft: "#4a5163", line: "#dde1ea", leaderBg: "#fbf5e9", leaderBr: "#b07a2f" };
+  const label = t => `<p style="font-family:Arial,sans-serif;font-size:9pt;font-weight:bold;letter-spacing:1px;color:${C.accent};margin:10pt 0 2pt;">${esc(t).toUpperCase()}</p>`;
+  const heading = t => `<p style="font-family:Arial,sans-serif;font-size:11pt;font-weight:bold;letter-spacing:1.5px;color:${C.primary};margin:0 0 8pt;border-bottom:1px solid ${C.line};padding-bottom:3pt;">${esc(t).toUpperCase()}</p>`;
+  const para = t => `<p style="margin:2pt 0 0;">${esc(t)}</p>`;
   const blocks = [];
 
   // 1. TITLE
-  blocks.push(`
-    <section class="g-title">
-      <h1 class="study">${esc(data.study) || '<span class="empty-note">Study title…</span>'}</h1>
-      ${has(data.week) ? `<div class="meta">${esc(data.week)}</div>` : ""}
-      ${has(data.description) ? `<p class="desc">${esc(data.description)}</p>` : ""}
-    </section>`);
+  let title = `<div style="text-align:center;">
+      <p style="font-family:Georgia,serif;font-size:24pt;font-weight:bold;color:${C.primary};margin:0 0 4pt;">${esc(d.study) || "Study Title"}</p>`;
+  if (has(d.week)) title += `<p style="font-family:Arial,sans-serif;font-size:10pt;letter-spacing:1.5px;color:${C.accent};font-weight:bold;margin:2pt 0 8pt;">${esc(d.week).toUpperCase()}</p>`;
+  if (has(d.description)) title += `<p style="font-style:italic;color:${C.soft};font-size:12pt;margin:0;">${esc(d.description)}</p>`;
+  title += `</div>`;
+  blocks.push(title);
 
   // 2. WEEKLY UPDATES
-  const ann = cleanList(data.announcements);
-  const updates = [];
-  updates.push(`<h2 class="g-h">Weekly Updates</h2>`);
-  if (ann.length) {
-    updates.push(`<div class="g-label">Announcements</div>
-      <ul class="g-list">${ann.map(a => `<li>${esc(a)}</li>`).join("")}</ul>`);
+  let updates = heading("Weekly Updates");
+  if (d.announcements.length) {
+    updates += label("Announcements");
+    updates += `<ul style="margin:2pt 0 0;padding-left:20pt;">${d.announcements.map(a => `<li style="margin:3pt 0;">${esc(a)}</li>`).join("")}</ul>`;
   }
-  if (has(data.iceBreaker)) {
-    updates.push(`<div class="g-label">Ice Breaker</div>
-      <div class="icebreaker"><p class="g-p">${esc(data.iceBreaker)}</p></div>`);
+  if (has(d.iceBreaker)) { updates += label("Ice Breaker"); updates += para(d.iceBreaker); }
+  if (has(d.focusInward) || has(d.focusOutward)) {
+    updates += label("Last Week's Growth Focus");
+    updates += focusTable(d.focusInward, d.focusOutward, C);
   }
-  if (has(data.focusInward) || has(data.focusOutward)) {
-    updates.push(`<div class="g-label">Last Week's Growth Focus</div>
-      <div class="focus-grid">
-        ${has(data.focusInward) ? `<div class="focus-card"><div class="cap">Inward</div><p class="g-p">${esc(data.focusInward)}</p></div>` : ""}
-        ${has(data.focusOutward) ? `<div class="focus-card"><div class="cap">Outward</div><p class="g-p">${esc(data.focusOutward)}</p></div>` : ""}
-      </div>`);
-  }
-  blocks.push(`<section>${updates.join("")}</section>`);
+  blocks.push(updates);
 
   // 3. BODY SEGMENTS
-  const segHtml = [];
-  const segs = (data.segments || []).filter(s =>
-    has(s.passage) || has(s.summary) || has(s.leaderNotes) || has(s.transition) ||
-    cleanList(s.questions).length || cleanList(s.relatedVerses).length);
-
-  segs.forEach((seg, idx) => {
-    const parts = [];
-    if (idx === 0) parts.push(`<h2 class="g-h">Scripture &amp; Discussion</h2>`);
-    if (has(seg.passage)) {
-      parts.push(`<h3 class="seg-passage">${esc(seg.passage)}</h3>
-        <div class="seg-read">Read together: ${esc(seg.passage)}</div>`);
-    }
-    if (has(seg.summary)) parts.push(`<div class="g-label">Summary</div><p class="g-p">${esc(seg.summary)}</p>`);
-    if (has(seg.leaderNotes)) {
-      parts.push(`<div class="leader-note"><div class="cap">Key Notes for Leaders</div><p class="g-p">${esc(seg.leaderNotes)}</p></div>`);
-    }
-    if (has(seg.transition)) parts.push(`<p class="transition">${esc(seg.transition)}</p>`);
-    const qs = cleanList(seg.questions);
-    if (qs.length) {
-      parts.push(`<div class="g-label">Questions</div>
-        <ol class="g-list">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ol>`);
-    }
-    const rv = cleanList(seg.relatedVerses);
-    if (rv.length) {
-      parts.push(`<div class="g-label">Related Verses</div>
-        <div class="related">${rv.map(v => `<span class="chip">${esc(v)}</span>`).join("")}</div>`);
-    }
-    // divider between segments (dashed, within the body block)
-    const sep = idx < segs.length - 1 ? '<hr class="seg-divider" />' : "";
-    segHtml.push(`<div class="segment-print">${parts.join("")}</div>${sep}`);
-  });
-  if (segHtml.length) blocks.push(`<section>${segHtml.join("")}</section>`);
+  if (d.segments.length) {
+    let body = heading("Scripture & Discussion");
+    d.segments.forEach((seg, idx) => {
+      if (idx > 0) body += `<hr style="border:none;border-top:1px dashed ${C.line};margin:16pt 0;" />`;
+      if (has(seg.passage)) {
+        body += `<p style="font-family:Georgia,serif;font-size:15pt;font-weight:bold;color:${C.primary};margin:0 0 1pt;">${esc(seg.passage)}</p>`;
+        body += `<p style="font-family:Arial,sans-serif;font-size:9pt;font-style:italic;color:${C.soft};margin:0 0 6pt;">Read together: ${esc(seg.passage)}</p>`;
+      }
+      if (has(seg.summary)) { body += label("Summary"); body += para(seg.summary); }
+      if (has(seg.leaderNotes)) body += leaderTable(seg.leaderNotes, C);
+      if (has(seg.transition)) body += `<p style="font-style:italic;color:${C.soft};margin:8pt 0 0;">${esc(seg.transition)}</p>`;
+      if (seg.questions.length) {
+        body += label("Questions");
+        body += `<ol style="margin:2pt 0 0;padding-left:20pt;">${seg.questions.map(q => `<li style="margin:4pt 0;">${esc(q)}</li>`).join("")}</ol>`;
+      }
+      if (seg.relatedVerses.length) {
+        body += label("Related Verses");
+        body += `<p style="margin:2pt 0 0;color:${C.soft};">${seg.relatedVerses.map(v => esc(v)).join(" &nbsp;•&nbsp; ")}</p>`;
+      }
+    });
+    blocks.push(body);
+  }
 
   // 4. CLOSING PRAYER
-  const prayers = cleanList(data.prayerPoints);
-  if (prayers.length) {
-    blocks.push(`<section>
-      <h2 class="g-h">Closing Prayer Points</h2>
-      <ul class="g-list">${prayers.map(p => `<li>${esc(p)}</li>`).join("")}</ul>
-    </section>`);
+  if (d.prayerPoints.length) {
+    let pr = heading("Closing Prayer Points");
+    pr += `<ul style="margin:2pt 0 0;padding-left:20pt;">${d.prayerPoints.map(p => `<li style="margin:3pt 0;">${esc(p)}</li>`).join("")}</ul>`;
+    blocks.push(pr);
   }
 
   // 5. NEXT WEEK GROWTH STEPS
-  if (has(data.nextInward) || has(data.nextOutward)) {
-    blocks.push(`<section>
-      <h2 class="g-h">Growth Steps for Next Week</h2>
-      <div class="focus-grid">
-        ${has(data.nextInward) ? `<div class="focus-card"><div class="cap">Inward</div><p class="g-p">${esc(data.nextInward)}</p></div>` : ""}
-        ${has(data.nextOutward) ? `<div class="focus-card"><div class="cap">Outward</div><p class="g-p">${esc(data.nextOutward)}</p></div>` : ""}
-      </div>
-    </section>`);
+  if (has(d.nextInward) || has(d.nextOutward)) {
+    let gr = heading("Growth Steps for Next Week");
+    gr += focusTable(d.nextInward, d.nextOutward, C);
+    blocks.push(gr);
   }
 
-  // 6. Join every block with a horizontal rule
-  g.innerHTML = blocks.join(RULE);
+  const content = blocks.join(RULE);
+
+  const pre = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${esc(d.study) || "Study Guide"}</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>
+  @page { size: 8.5in 11in; margin: 0.9in 0.9in; }
+  body { font-family: Georgia, "Times New Roman", serif; font-size: 11pt; color: ${C.ink}; line-height: 1.5; }
+  li { line-height: 1.4; }
+</style></head><body>`;
+  const post = `</body></html>`;
+  return pre + content + post;
+}
+
+// Two-column shaded table for inward/outward focus (Word renders tables reliably)
+function focusTable(inward, outward, C) {
+  const cell = (cap, txt) => `<td style="width:50%;border:1px solid ${C.line};background:#fafbfe;padding:8pt 10pt;vertical-align:top;">
+      <p style="font-family:Arial,sans-serif;font-size:9pt;font-weight:bold;letter-spacing:1px;color:${C.primary};margin:0 0 3pt;">${cap}</p>
+      <p style="margin:0;">${esc(txt)}</p></td>`;
+  let cells = "";
+  if (has(inward)) cells += cell("INWARD", inward);
+  if (has(outward)) cells += cell("OUTWARD", outward);
+  return `<table style="width:100%;border-collapse:collapse;margin:4pt 0 0;"><tr>${cells}</tr></table>`;
+}
+
+// Shaded callout box for leader notes
+function leaderTable(txt, C) {
+  return `<table style="width:100%;border-collapse:collapse;margin:6pt 0;"><tr>
+    <td style="border:1px solid ${C.leaderBr};border-left:4px solid ${C.accent};background:${C.leaderBg};padding:8pt 12pt;">
+      <p style="font-family:Arial,sans-serif;font-size:9pt;font-weight:bold;letter-spacing:1px;color:${C.accent};margin:0 0 3pt;">KEY NOTES FOR LEADERS</p>
+      <p style="margin:0;">${esc(txt)}</p>
+    </td></tr></table>`;
 }
 
 /* =====================================================================
-   TOOLBAR ACTIONS
+   DOWNLOAD
    ===================================================================== */
-function reloadAll() { renderEditor(); renderGuide(); persist(); }
-
-document.getElementById("btnExample").addEventListener("click", () => {
-  if (confirm("Load the example guide? This replaces what's on screen now.")) {
-    data = structuredClone(EXAMPLE); reloadAll();
-  }
-});
-document.getElementById("btnNew").addEventListener("click", () => {
-  if (confirm("Clear everything and start a blank guide?")) {
-    data = structuredClone(BLANK); reloadAll();
-  }
-});
-document.getElementById("btnSave").addEventListener("click", () => {
-  const name = (data.study || "study-guide").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  const week = (data.week || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  const fname = [name, week].filter(Boolean).join("_") + ".json";
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+function downloadDoc(d) {
+  const html = buildDocHtml(d);
+  const blob = new Blob(["﻿", html], { type: "application/msword" });
+  const name = (d.study || "study-guide").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const week = (d.week || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const fname = ([name, week].filter(Boolean).join("_") || "study-guide") + ".doc";
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob); a.download = fname || "study-guide.json";
-  a.click(); URL.revokeObjectURL(a.href);
-});
-document.getElementById("btnOpen").addEventListener("click", () => document.getElementById("fileInput").click());
-document.getElementById("fileInput").addEventListener("change", (e) => {
-  const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const loaded = JSON.parse(reader.result);
-      data = normalize(loaded); reloadAll();
-    } catch (err) { alert("Sorry, that file couldn't be read as a study guide."); }
-  };
-  reader.readAsText(file);
-  e.target.value = "";
-});
-document.getElementById("btnPrint").addEventListener("click", () => window.print());
+  a.href = URL.createObjectURL(blob); a.download = fname;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  showToast("Downloaded " + fname);
+}
 
-// Make sure a loaded file has every expected field
-function normalize(d) {
-  const base = structuredClone(BLANK);
-  const out = Object.assign(base, d || {});
-  out.announcements = Array.isArray(out.announcements) && out.announcements.length ? out.announcements : [""];
-  out.prayerPoints = Array.isArray(out.prayerPoints) && out.prayerPoints.length ? out.prayerPoints : [""];
-  out.segments = Array.isArray(out.segments) && out.segments.length ? out.segments.map(s => Object.assign(newSegment(), s)) : [newSegment()];
-  out.segments.forEach(s => {
-    s.questions = Array.isArray(s.questions) && s.questions.length ? s.questions : [""];
-    s.relatedVerses = Array.isArray(s.relatedVerses) && s.relatedVerses.length ? s.relatedVerses : [""];
-  });
-  return out;
+function showToast(msg) {
+  const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(showToast._t); showToast._t = setTimeout(() => t.classList.remove("show"), 2600);
 }
 
 /* =====================================================================
-   INIT
+   WIRE UP
    ===================================================================== */
-data = normalize(data);
-renderEditor();
-renderGuide();
+document.querySelectorAll("[data-add]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const key = btn.getAttribute("data-add");
+    if (key === "segments") {
+      const box = document.getElementById("segments"); box.appendChild(segmentEl(newSegment())); renumberSegments();
+    } else {
+      const box = document.getElementById(key);
+      const ph = key === "announcements" ? "One announcement…" : "One prayer point…";
+      box.appendChild(stringItem(key, "", ph));
+    }
+  });
+});
+
+document.getElementById("guideForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const d = collect();
+  if (!d.study) { alert("Please enter what you're studying (the title) before downloading."); document.getElementById("study").focus(); return; }
+  downloadDoc(d);
+});
+
+document.getElementById("btnClear").addEventListener("click", () => {
+  if (confirm("Clear the form and start blank?")) fillForm(structuredClone(BLANK));
+});
+
+// Initial load: pre-fill with the example template
+fillForm(structuredClone(EXAMPLE));
+renumberSegments();
 </script>
 </body>
 </html>

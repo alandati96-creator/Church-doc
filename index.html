@@ -91,11 +91,12 @@
 
   /* Bottom bar: compactness + actions */
   .bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -4px 16px rgba(0,0,0,.06); }
-  .bottom-inner { max-width: 820px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: center; }
-  .compact-ctl { display: flex; align-items: center; gap: 10px; flex: 1 1 320px; }
-  .compact-ctl label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--ink-soft); white-space: nowrap; }
-  .compact-ctl input[type=range] { flex: 1 1 auto; min-width: 120px; }
-  .compact-ctl .val { font-size: 12px; font-weight: 700; color: var(--primary); min-width: 74px; text-align: right; }
+  .bottom-inner { max-width: 820px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; }
+  .sliders { display: flex; flex-wrap: wrap; gap: 8px 22px; flex: 1 1 440px; }
+  .slider-ctl { display: flex; align-items: center; gap: 9px; flex: 1 1 200px; }
+  .slider-ctl label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--ink-soft); white-space: nowrap; }
+  .slider-ctl input[type=range] { flex: 1 1 auto; min-width: 90px; }
+  .slider-ctl .val { font-size: 12px; font-weight: 700; color: var(--primary); min-width: 62px; text-align: right; white-space: nowrap; }
   .actions { display: flex; gap: 10px; flex: 0 0 auto; }
   .btn { font: inherit; font-size: 15px; font-weight: 700; padding: 11px 20px; border-radius: 9px; border: none; cursor: pointer; }
   .btn.primary { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(176,122,47,.35); }
@@ -190,8 +191,11 @@
       <select id="profileSelect"></select>
       <button type="button" class="mini-btn" id="btnProfSave">Save</button>
       <button type="button" class="mini-btn" id="btnProfSaveAs">Save as new…</button>
+      <button type="button" class="mini-btn" id="btnProfExport">Export…</button>
+      <button type="button" class="mini-btn" id="btnProfImport">Import…</button>
       <span class="grow"></span>
       <button type="button" class="mini-btn danger" id="btnProfDelete">Delete</button>
+      <input type="file" id="profileFile" accept="application/json,.json" style="display:none" />
     </div>
 
     <div class="style-grid" id="styleControls"></div>
@@ -206,10 +210,22 @@
 <!-- ==================== BOTTOM BAR ==================== -->
 <div class="bottom-bar">
   <div class="bottom-inner">
-    <div class="compact-ctl">
-      <label for="compact">Compactness</label>
-      <input type="range" id="compact" min="0.6" max="1.4" step="0.05" value="1" />
-      <span class="val" id="compactVal">Balanced</span>
+    <div class="sliders" title="Tighten these to fit more on each page and save paper">
+      <div class="slider-ctl">
+        <label for="compact">Compactness</label>
+        <input type="range" id="compact" min="0.6" max="1.4" step="0.05" value="1" />
+        <span class="val" id="compactVal">Balanced</span>
+      </div>
+      <div class="slider-ctl">
+        <label for="lineSpacing">Line spacing</label>
+        <input type="range" id="lineSpacing" min="1" max="2" step="0.05" value="1.5" />
+        <span class="val" id="lineSpacingVal">1.50</span>
+      </div>
+      <div class="slider-ctl">
+        <label for="margin">Margins</label>
+        <input type="range" id="margin" min="0.4" max="1.25" step="0.05" value="0.9" />
+        <span class="val" id="marginVal">0.90&Prime;</span>
+      </div>
     </div>
     <div class="actions">
       <button type="button" class="btn ghost" id="btnClear">Clear</button>
@@ -237,10 +253,11 @@ const DEFAULT_STYLE = {
   bodyFont: "Georgia", bodySize: 11, bodyColor: "#1f2430",
   accentColor: "#b07a2f"
 };
+const DEFAULT_LAYOUT = { compact: 1.0, lineSpacing: 1.5, margin: 0.9 };
 const BUILTIN_PROFILES = {
-  "Classic":     Object.assign({}, DEFAULT_STYLE, { compact: 1.0 }),
-  "Ink Saver":   { titleFont:"Calibri", titleSize:18, titleColor:"#000000", titleBold:true, headingFont:"Calibri", headingSize:10, headingColor:"#000000", headingBold:true, bodyFont:"Calibri", bodySize:10, bodyColor:"#000000", accentColor:"#444444", compact:0.7 },
-  "Large Print": { titleFont:"Georgia", titleSize:28, titleColor:"#3a4a7a", titleBold:true, headingFont:"Arial", headingSize:14, headingColor:"#3a4a7a", headingBold:true, bodyFont:"Georgia", bodySize:14, bodyColor:"#1f2430", accentColor:"#b07a2f", compact:1.25 }
+  "Classic":     Object.assign({}, DEFAULT_STYLE, DEFAULT_LAYOUT),
+  "Ink Saver":   { titleFont:"Calibri", titleSize:18, titleColor:"#000000", titleBold:true, headingFont:"Calibri", headingSize:10, headingColor:"#000000", headingBold:true, bodyFont:"Calibri", bodySize:10, bodyColor:"#000000", accentColor:"#444444", compact:0.7, lineSpacing:1.15, margin:0.5 },
+  "Large Print": { titleFont:"Georgia", titleSize:28, titleColor:"#3a4a7a", titleBold:true, headingFont:"Arial", headingSize:14, headingColor:"#3a4a7a", headingBold:true, bodyFont:"Georgia", bodySize:14, bodyColor:"#1f2430", accentColor:"#b07a2f", compact:1.25, lineSpacing:1.7, margin:1.0 }
 };
 
 /* =====================================================================
@@ -328,11 +345,13 @@ function newSegment() { return { passage: "", scriptureText: "", summary: "", le
 /* =====================================================================
    STATE + PERSISTENCE
    ===================================================================== */
-const KEY_WORKING = "churchStudyGuide.working.v2";     // last-used style + compact
-const KEY_PROFILES = "churchStudyGuide.profiles.v2";   // saved named profiles
+const KEY_WORKING = "churchStudyGuide.working.v3";     // last-used style + layout
+const KEY_PROFILES = "churchStudyGuide.profiles.v3";   // saved named profiles
 
 let style = Object.assign({}, DEFAULT_STYLE);
-let compact = 1.0;
+let compact = DEFAULT_LAYOUT.compact;
+let lineSpacing = DEFAULT_LAYOUT.lineSpacing;
+let margin = DEFAULT_LAYOUT.margin;
 
 function loadProfiles() {
   try {
@@ -346,7 +365,7 @@ function loadProfiles() {
 function saveProfiles(p) { try { localStorage.setItem(KEY_PROFILES, JSON.stringify(p)); } catch (e) {} }
 let profiles = loadProfiles();
 
-function saveWorking() { try { localStorage.setItem(KEY_WORKING, JSON.stringify({ style, compact })); } catch (e) {} }
+function saveWorking() { try { localStorage.setItem(KEY_WORKING, JSON.stringify({ style, compact, lineSpacing, margin })); } catch (e) {} }
 function loadWorking() { try { const raw = localStorage.getItem(KEY_WORKING); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 
 /* =====================================================================
@@ -526,17 +545,17 @@ function buildContent(d, S, K) {
   return blocks.join(RULE);
 }
 
-function buildDocHtml(d, S, K) {
-  const pageMargin = (0.3 + 0.6 * K).toFixed(2);
-  const lh = (1.1 + 0.4 * K).toFixed(2);
+function buildDocHtml(d, S, K, lh, pageMargin) {
+  const mg = (+pageMargin).toFixed(2);
+  const line = (+lh).toFixed(2);
   const content = buildContent(d, S, K);
   const pre = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="utf-8"><title>${esc(d.study) || "Study Guide"}</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
 <style>
-  @page { size: 8.5in 11in; margin: ${pageMargin}in; }
-  body { font-family: ${ff(S.bodyFont)}; font-size: ${S.bodySize}pt; color: ${S.bodyColor}; line-height: ${lh}; }
-  li { line-height: ${lh}; }
+  @page { size: 8.5in 11in; margin: ${mg}in; }
+  body { font-family: ${ff(S.bodyFont)}; font-size: ${S.bodySize}pt; color: ${S.bodyColor}; line-height: ${line}; }
+  li { line-height: ${line}; }
 </style></head><body>`;
   return pre + content + `</body></html>`;
 }
@@ -592,35 +611,59 @@ function refreshProfileSelect() {
   Object.keys(profiles.list).forEach(name => { const o = document.createElement("option"); o.value = name; o.textContent = name; sel.appendChild(o); });
   if (profiles.active && profiles.list[profiles.active]) sel.value = profiles.active;
 }
+// Split a stored profile into its style fields and its layout (compact/lineSpacing/margin)
+function splitProfile(p) {
+  const { compact: c, lineSpacing: ls, margin: mg, ...styleFields } = p;
+  return {
+    style: Object.assign({}, DEFAULT_STYLE, styleFields),
+    compact: typeof c === "number" ? c : DEFAULT_LAYOUT.compact,
+    lineSpacing: typeof ls === "number" ? ls : DEFAULT_LAYOUT.lineSpacing,
+    margin: typeof mg === "number" ? mg : DEFAULT_LAYOUT.margin
+  };
+}
 function applyProfile(name) {
   const p = profiles.list[name]; if (!p) return;
-  const { compact: c, ...styleFields } = p;
-  style = Object.assign({}, DEFAULT_STYLE, styleFields);
-  compact = typeof c === "number" ? c : 1.0;
+  const s = splitProfile(p);
+  style = s.style; compact = s.compact; lineSpacing = s.lineSpacing; margin = s.margin;
   profiles.active = name; saveProfiles(profiles); saveWorking();
-  syncStyleControls(); syncCompact(); renderPreview();
+  syncStyleControls(); syncLayout(); renderPreview();
 }
+function currentProfile() { return Object.assign({}, style, { compact, lineSpacing, margin }); }
 
 function previewData() { const d = collect(); return (d.study || d.segments.length || d.announcements.length) ? d : EXAMPLE; }
 function renderPreview() {
   const el = document.getElementById("stylePreview"); if (!el) return;
-  const lh = (1.1 + 0.4 * compact).toFixed(2);
   const inner = buildContent(previewData(), style, compact);
-  el.innerHTML = `<div style="font-family:${ff(style.bodyFont)};font-size:${style.bodySize}pt;color:${style.bodyColor};line-height:${lh};background:#fff;padding:26px 30px;">${inner}</div>`;
+  el.innerHTML = `<div style="font-family:${ff(style.bodyFont)};font-size:${style.bodySize}pt;color:${style.bodyColor};line-height:${lineSpacing.toFixed(2)};background:#fff;padding:26px 30px;">${inner}</div>`;
 }
 
 /* =====================================================================
-   COMPACTNESS SLIDER
+   LAYOUT SLIDERS — compactness (block spacing), line spacing, margins.
+   Tightening these fits more per page, so the guide uses less paper.
    ===================================================================== */
 function compactLabel(v) { return v < 0.82 ? "Compact" : v > 1.18 ? "Spacious" : "Balanced"; }
-function syncCompact() {
+function syncLayout() {
   document.getElementById("compact").value = compact;
   document.getElementById("compactVal").textContent = compactLabel(compact);
+  document.getElementById("lineSpacing").value = lineSpacing;
+  document.getElementById("lineSpacingVal").textContent = lineSpacing.toFixed(2);
+  document.getElementById("margin").value = margin;
+  document.getElementById("marginVal").innerHTML = margin.toFixed(2) + "&Prime;";
 }
 document.getElementById("compact").addEventListener("input", (e) => {
   compact = parseFloat(e.target.value);
   document.getElementById("compactVal").textContent = compactLabel(compact);
   saveWorking(); renderPreview();
+});
+document.getElementById("lineSpacing").addEventListener("input", (e) => {
+  lineSpacing = parseFloat(e.target.value);
+  document.getElementById("lineSpacingVal").textContent = lineSpacing.toFixed(2);
+  saveWorking(); renderPreview();
+});
+document.getElementById("margin").addEventListener("input", (e) => {
+  margin = parseFloat(e.target.value);
+  document.getElementById("marginVal").innerHTML = margin.toFixed(2) + "&Prime;";
+  saveWorking(); // margins don't change the in-page preview, only the Word page size
 });
 
 /* =====================================================================
@@ -629,7 +672,7 @@ document.getElementById("compact").addEventListener("input", (e) => {
 function downloadDoc() {
   const d = collect();
   if (!d.study) { alert("Please enter what you're studying (the title) before downloading."); switchTab("content"); document.getElementById("study").focus(); return; }
-  const html = buildDocHtml(d, style, compact);
+  const html = buildDocHtml(d, style, compact, lineSpacing, margin);
   const blob = new Blob(["﻿", html], { type: "application/msword" });
   const name = (d.study || "study-guide").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const week = (d.week || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -668,14 +711,14 @@ document.getElementById("profileSelect").addEventListener("change", (e) => apply
 document.getElementById("btnProfSave").addEventListener("click", () => {
   const name = document.getElementById("profileSelect").value;
   if (!name) return;
-  profiles.list[name] = Object.assign({}, style, { compact });
+  profiles.list[name] = currentProfile();
   profiles.active = name; saveProfiles(profiles);
   showToast('Saved profile "' + name + '"');
 });
 document.getElementById("btnProfSaveAs").addEventListener("click", () => {
   const name = (prompt("Name this style profile:") || "").trim();
   if (!name) return;
-  profiles.list[name] = Object.assign({}, style, { compact });
+  profiles.list[name] = currentProfile();
   profiles.active = name; saveProfiles(profiles);
   refreshProfileSelect(); document.getElementById("profileSelect").value = name;
   showToast('Saved profile "' + name + '"');
@@ -691,19 +734,70 @@ document.getElementById("btnProfDelete").addEventListener("click", () => {
   showToast("Profile deleted");
 });
 
+// Export all saved profiles to a JSON file you can move between computers
+document.getElementById("btnProfExport").addEventListener("click", () => {
+  const payload = { type: "church-study-profiles", version: 1, profiles: profiles.list };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "church-study-profiles.json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  showToast("Exported " + Object.keys(profiles.list).length + " profile(s)");
+});
+document.getElementById("btnProfImport").addEventListener("click", () => document.getElementById("profileFile").click());
+document.getElementById("profileFile").addEventListener("change", (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      // Accept our export shape {profiles:{...}} or a bare {name: profileObj} map
+      const incoming = parsed && parsed.profiles ? parsed.profiles : parsed;
+      if (!incoming || typeof incoming !== "object" || Array.isArray(incoming)) throw new Error("bad shape");
+      const names = Object.keys(incoming);
+      if (!names.length) throw new Error("empty");
+      let added = 0;
+      names.forEach(name => {
+        const p = incoming[name];
+        if (p && typeof p === "object") { profiles.list[name] = normalizeProfile(p); added++; }
+      });
+      if (!added) throw new Error("no valid profiles");
+      profiles.active = names[names.length - 1];
+      saveProfiles(profiles); refreshProfileSelect(); applyProfile(profiles.active);
+      showToast("Imported " + added + " profile(s)");
+    } catch (err) {
+      alert("Sorry, that file couldn't be read as a profiles file.");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+// Fill in any missing fields so an imported profile is always complete
+function normalizeProfile(p) {
+  const s = splitProfile(p);
+  return Object.assign({}, s.style, { compact: s.compact, lineSpacing: s.lineSpacing, margin: s.margin });
+}
+
 /* =====================================================================
    INIT
    ===================================================================== */
 (function init() {
   // content
   fillForm(structuredClone(EXAMPLE));
-  // style + compact: restore last-used working values, else active profile
+  // style + layout: restore last-used working values, else the active profile
   const w = loadWorking();
-  if (w && w.style) { style = Object.assign({}, DEFAULT_STYLE, w.style); compact = typeof w.compact === "number" ? w.compact : 1.0; }
-  else if (profiles.list[profiles.active]) { const { compact: c, ...sf } = profiles.list[profiles.active]; style = Object.assign({}, DEFAULT_STYLE, sf); compact = typeof c === "number" ? c : 1.0; }
+  if (w && w.style) {
+    style = Object.assign({}, DEFAULT_STYLE, w.style);
+    compact = typeof w.compact === "number" ? w.compact : DEFAULT_LAYOUT.compact;
+    lineSpacing = typeof w.lineSpacing === "number" ? w.lineSpacing : DEFAULT_LAYOUT.lineSpacing;
+    margin = typeof w.margin === "number" ? w.margin : DEFAULT_LAYOUT.margin;
+  } else if (profiles.list[profiles.active]) {
+    const s = splitProfile(profiles.list[profiles.active]);
+    style = s.style; compact = s.compact; lineSpacing = s.lineSpacing; margin = s.margin;
+  }
   buildStyleControls();
   refreshProfileSelect();
-  syncCompact();
+  syncLayout();
   renderPreview();
 })();
 </script>

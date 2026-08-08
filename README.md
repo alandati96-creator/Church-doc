@@ -57,8 +57,21 @@ browser, so it's there next time. Switch profiles from the dropdown, update one 
 - **Ink Saver** — smaller, black, tightly spaced to save toner and paper.
 - **Large Print** — bigger type and roomier spacing for easier reading.
 
-The **Compactness** slider (bottom of the page) controls margins, line spacing, and the
-gaps between blocks. It's saved as part of each profile.
+**Moving profiles between computers:** profiles live in one browser on one device. Use
+**Export…** to download all your profiles as a small `.json` file, and **Import…** on
+another computer (or browser) to load them back in. Import adds the profiles to whatever
+you already have.
+
+### Paper-saving sliders (bottom of the page)
+
+Three sliders control how much paper the guide uses — tighten them to fit more on each
+page. They're saved as part of each profile.
+
+- **Compactness** — the gaps between blocks and around each element.
+- **Line spacing** — how tall each line of text is (1.0 = single-spaced).
+- **Margins** — the white border around the page, in inches.
+
+The **Ink Saver** profile sets all three tight; **Large Print** loosens them.
 
 ## How the Word file is made
 

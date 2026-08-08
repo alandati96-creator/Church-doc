@@ -15,34 +15,36 @@
   * { box-sizing: border-box; }
   body { margin: 0; font-family: var(--sans); background: var(--bg); color: var(--ink); }
 
-  header.top {
-    background: var(--primary); color: #fff; padding: 22px 20px; text-align: center;
-  }
+  header.top { background: var(--primary); color: #fff; padding: 20px 20px 0; text-align: center; }
   header.top h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: .3px; }
-  header.top p { margin: 0; opacity: .9; font-size: 14px; }
+  header.top p { margin: 0 0 14px; opacity: .9; font-size: 14px; }
 
-  form { max-width: 780px; margin: 24px auto 120px; padding: 0 16px; }
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; max-width: 820px; margin: 0 auto; padding: 0 16px; }
+  .tab {
+    flex: 0 0 auto; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+    background: rgba(255,255,255,.14); color: #fff; border: none;
+    padding: 11px 20px; border-radius: 10px 10px 0 0;
+  }
+  .tab.active { background: var(--bg); color: var(--primary); }
+
+  main { max-width: 820px; margin: 0 auto; padding: 22px 16px 150px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
 
   .hint {
     background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
     padding: 12px 14px; font-size: 13px; color: var(--ink-soft); margin-bottom: 20px; line-height: 1.5;
   }
 
-  fieldset {
-    border: 1px solid var(--line); border-radius: var(--radius);
-    margin: 0 0 20px; padding: 16px 18px 18px; background: var(--card);
-  }
-  legend {
-    font-weight: 700; color: var(--primary); padding: 0 8px; font-size: 14px;
-    text-transform: uppercase; letter-spacing: .6px;
-  }
-  label.field { display: block; margin: 12px 0 4px; font-size: 12px; font-weight: 700;
-    color: var(--ink-soft); text-transform: uppercase; letter-spacing: .4px; }
+  fieldset { border: 1px solid var(--line); border-radius: var(--radius); margin: 0 0 20px; padding: 16px 18px 18px; background: var(--card); }
+  legend { font-weight: 700; color: var(--primary); padding: 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: .6px; }
+  label.field { display: block; margin: 12px 0 4px; font-size: 12px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .4px; }
   input[type=text], textarea {
     width: 100%; font: inherit; font-size: 14px; color: var(--ink);
     padding: 9px 11px; border: 1px solid var(--line); border-radius: 7px; background: #fff; resize: vertical;
   }
-  input[type=text]:focus, textarea:focus { outline: 2px solid var(--primary-2); border-color: var(--primary-2); }
+  input[type=text]:focus, textarea:focus, select:focus { outline: 2px solid var(--primary-2); border-color: var(--primary-2); }
   textarea { min-height: 68px; line-height: 1.45; }
 
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -50,46 +52,58 @@
 
   .list-item { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
   .list-item textarea, .list-item input { flex: 1; }
-  .icon-btn {
-    flex: 0 0 auto; border: 1px solid var(--line); background: #fff; color: #b23c3c;
-    border-radius: 7px; width: 36px; height: 36px; cursor: pointer; font-size: 17px; line-height: 1;
-  }
+  .icon-btn { flex: 0 0 auto; border: 1px solid var(--line); background: #fff; color: #b23c3c; border-radius: 7px; width: 36px; height: 36px; cursor: pointer; font-size: 17px; line-height: 1; }
   .icon-btn:hover { background: #fdeaea; }
-  .add-btn {
-    margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--primary);
-    background: #eef1fb; border: 1px dashed var(--primary-2); border-radius: 7px;
-    padding: 8px 12px; cursor: pointer;
-  }
+  .add-btn { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--primary); background: #eef1fb; border: 1px dashed var(--primary-2); border-radius: 7px; padding: 8px 12px; cursor: pointer; }
   .add-btn:hover { background: #e3e8fa; }
 
-  .segment {
-    border: 1px solid var(--line); border-left: 4px solid var(--primary-2);
-    border-radius: var(--radius); padding: 14px 16px 16px; margin-top: 14px; background: #fbfcfe;
-  }
+  .segment { border: 1px solid var(--line); border-left: 4px solid var(--primary-2); border-radius: var(--radius); padding: 14px 16px 16px; margin-top: 14px; background: #fbfcfe; }
   .segment-head { display: flex; align-items: center; justify-content: space-between; }
   .segment-head h4 { margin: 0; color: var(--primary); font-size: 14px; }
-  .sub-legend { font-size: 11px; font-weight: 700; color: var(--accent);
-    text-transform: uppercase; letter-spacing: .5px; margin: 14px 0 2px; }
+  .sub-legend { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .5px; margin: 14px 0 2px; }
 
-  .actions {
-    position: sticky; bottom: 0; background: linear-gradient(to top, var(--bg) 70%, transparent);
-    padding: 16px 0 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+  /* Styling tab */
+  .profile-bar {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 18px;
   }
-  .btn {
-    font: inherit; font-size: 15px; font-weight: 700; padding: 12px 22px; border-radius: 9px;
-    border: none; cursor: pointer;
-  }
+  .profile-bar select { font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: #fff; min-width: 160px; }
+  .profile-bar .grow { flex: 1 1 auto; }
+  .mini-btn { font: inherit; font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 7px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+  .mini-btn:hover { background: #f4f6fa; }
+  .mini-btn.danger { color: #b23c3c; }
+  .mini-btn.danger:hover { background: #fdeaea; }
+
+  .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .style-grid { grid-template-columns: 1fr; } }
+  .style-card { border: 1px solid var(--line); border-radius: var(--radius); background: #fff; padding: 12px 14px 14px; }
+  .style-card h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--primary); }
+  .ctl { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 7px 0; }
+  .ctl label { font-size: 13px; color: var(--ink-soft); font-weight: 600; }
+  .ctl select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  .ctl input[type=number] { width: 68px; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; }
+  .ctl input[type=color] { width: 42px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; }
+  .ctl input[type=checkbox] { width: 20px; height: 20px; cursor: pointer; }
+
+  .preview-shell { margin-top: 18px; }
+  .preview-shell h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--ink-soft); margin: 0 0 8px; }
+  .preview-page { border: 1px solid var(--line); border-radius: 8px; background: #fff; max-height: 460px; overflow: auto; box-shadow: inset 0 0 0 1px #f0f2f7; }
+
+  /* Bottom bar: compactness + actions */
+  .bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -4px 16px rgba(0,0,0,.06); }
+  .bottom-inner { max-width: 820px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: center; }
+  .compact-ctl { display: flex; align-items: center; gap: 10px; flex: 1 1 320px; }
+  .compact-ctl label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--ink-soft); white-space: nowrap; }
+  .compact-ctl input[type=range] { flex: 1 1 auto; min-width: 120px; }
+  .compact-ctl .val { font-size: 12px; font-weight: 700; color: var(--primary); min-width: 74px; text-align: right; }
+  .actions { display: flex; gap: 10px; flex: 0 0 auto; }
+  .btn { font: inherit; font-size: 15px; font-weight: 700; padding: 11px 20px; border-radius: 9px; border: none; cursor: pointer; }
   .btn.primary { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(176,122,47,.35); }
   .btn.primary:hover { filter: brightness(1.07); }
   .btn.ghost { background: #fff; color: var(--ink-soft); border: 1px solid var(--line); }
   .btn.ghost:hover { background: #f4f6fa; }
 
-  .toast {
-    position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
-    background: var(--primary); color: #fff; padding: 12px 20px; border-radius: 30px;
-    font-size: 14px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,.25);
-    opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
-  }
+  .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%) translateY(20px); background: var(--primary); color: #fff; padding: 12px 20px; border-radius: 30px; font-size: 14px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,.25); opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
@@ -97,97 +111,163 @@
 
 <header class="top">
   <h1>✝️ Church Study Guide Maker</h1>
-  <p>Fill in tonight's guide, then download it as a Word document.</p>
+  <p>Fill in tonight's guide, style it your way, then download it as a Word document.</p>
+  <div class="tabs">
+    <button class="tab active" data-tab="content">Guide Content</button>
+    <button class="tab" data-tab="styling">Styling</button>
+  </div>
 </header>
 
-<form id="guideForm">
-  <div class="hint">
-    The fields below are pre-filled with an example so you can see what goes where — just replace
-    the text with your own. Use <strong>+ Add</strong> buttons for extra announcements, scripture
-    segments, questions, verses, or prayer points. When you're done, click
-    <strong>Download Word Document</strong> at the bottom. Every section becomes a block separated
-    by a horizontal line in the finished <code>.doc</code>.
+<main>
+  <!-- ==================== CONTENT PANEL ==================== -->
+  <section class="panel active" id="panel-content">
+    <div class="hint">
+      The fields below are pre-filled with an example so you can see what goes where — just replace
+      the text with your own. Use <strong>+ Add</strong> buttons for extra items. Adjust the look in the
+      <strong>Styling</strong> tab and the spacing with the slider at the bottom, then click
+      <strong>Download Word Document</strong>.
+    </div>
+    <form id="guideForm">
+      <!-- 1. TITLE -->
+      <fieldset>
+        <legend>1 · Title</legend>
+        <div class="row2">
+          <div><label class="field" for="study">What we're studying</label><input type="text" id="study" /></div>
+          <div><label class="field" for="week">Week</label><input type="text" id="week" /></div>
+        </div>
+        <label class="field" for="description">Topical description of the night</label>
+        <textarea id="description"></textarea>
+      </fieldset>
+
+      <!-- 2. WEEKLY UPDATES -->
+      <fieldset>
+        <legend>2 · Weekly Updates</legend>
+        <label class="field">Church announcements</label>
+        <div id="announcements"></div>
+        <button type="button" class="add-btn" data-add="announcements">+ Add announcement</button>
+        <label class="field" for="iceBreaker" style="margin-top:16px">Ice breaker</label>
+        <textarea id="iceBreaker"></textarea>
+        <div class="row2" style="margin-top:6px">
+          <div><label class="field" for="focusInward">Last week's inward focus</label><textarea id="focusInward"></textarea></div>
+          <div><label class="field" for="focusOutward">Last week's outward focus</label><textarea id="focusOutward"></textarea></div>
+        </div>
+      </fieldset>
+
+      <!-- 3. BODY -->
+      <fieldset>
+        <legend>3 · Body — Scripture Segments</legend>
+        <div id="segments"></div>
+        <button type="button" class="add-btn" data-add="segments">+ Add scripture segment</button>
+      </fieldset>
+
+      <!-- 4. CLOSING PRAYER -->
+      <fieldset>
+        <legend>4 · Closing Prayer Points</legend>
+        <div id="prayerPoints"></div>
+        <button type="button" class="add-btn" data-add="prayerPoints">+ Add prayer point</button>
+      </fieldset>
+
+      <!-- 5. NEXT WEEK GROWTH -->
+      <fieldset>
+        <legend>5 · Growth Steps for Next Week</legend>
+        <div class="row2">
+          <div><label class="field" for="nextInward">Inward growth step</label><textarea id="nextInward"></textarea></div>
+          <div><label class="field" for="nextOutward">Outward growth step</label><textarea id="nextOutward"></textarea></div>
+        </div>
+      </fieldset>
+    </form>
+  </section>
+
+  <!-- ==================== STYLING PANEL ==================== -->
+  <section class="panel" id="panel-styling">
+    <div class="hint">
+      Change the fonts, sizes, colors, and bolding of the finished document. Save a look you like as a
+      <strong>profile</strong> (stored in this browser) and load it any time. The preview below updates as you go.
+    </div>
+
+    <div class="profile-bar">
+      <label for="profileSelect" style="font-size:13px;font-weight:700;color:var(--ink-soft)">Profile</label>
+      <select id="profileSelect"></select>
+      <button type="button" class="mini-btn" id="btnProfSave">Save</button>
+      <button type="button" class="mini-btn" id="btnProfSaveAs">Save as new…</button>
+      <span class="grow"></span>
+      <button type="button" class="mini-btn danger" id="btnProfDelete">Delete</button>
+    </div>
+
+    <div class="style-grid" id="styleControls"></div>
+
+    <div class="preview-shell">
+      <h3>Live preview</h3>
+      <div class="preview-page" id="stylePreview"></div>
+    </div>
+  </section>
+</main>
+
+<!-- ==================== BOTTOM BAR ==================== -->
+<div class="bottom-bar">
+  <div class="bottom-inner">
+    <div class="compact-ctl">
+      <label for="compact">Compactness</label>
+      <input type="range" id="compact" min="0.6" max="1.4" step="0.05" value="1" />
+      <span class="val" id="compactVal">Balanced</span>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="btnClear">Clear</button>
+      <button type="button" class="btn primary" id="btnDownload">⬇ Download Word Document</button>
+    </div>
   </div>
-
-  <!-- 1. TITLE -->
-  <fieldset>
-    <legend>1 · Title</legend>
-    <div class="row2">
-      <div>
-        <label class="field" for="study">What we're studying</label>
-        <input type="text" id="study" name="study" />
-      </div>
-      <div>
-        <label class="field" for="week">Week</label>
-        <input type="text" id="week" name="week" />
-      </div>
-    </div>
-    <label class="field" for="description">Topical description of the night</label>
-    <textarea id="description" name="description"></textarea>
-  </fieldset>
-
-  <!-- 2. WEEKLY UPDATES -->
-  <fieldset>
-    <legend>2 · Weekly Updates</legend>
-    <label class="field">Church announcements</label>
-    <div id="announcements"></div>
-    <button type="button" class="add-btn" data-add="announcements">+ Add announcement</button>
-
-    <label class="field" for="iceBreaker" style="margin-top:16px">Ice breaker</label>
-    <textarea id="iceBreaker" name="iceBreaker"></textarea>
-
-    <div class="row2" style="margin-top:6px">
-      <div>
-        <label class="field" for="focusInward">Last week's inward focus</label>
-        <textarea id="focusInward" name="focusInward"></textarea>
-      </div>
-      <div>
-        <label class="field" for="focusOutward">Last week's outward focus</label>
-        <textarea id="focusOutward" name="focusOutward"></textarea>
-      </div>
-    </div>
-  </fieldset>
-
-  <!-- 3. BODY -->
-  <fieldset>
-    <legend>3 · Body — Scripture Segments</legend>
-    <div id="segments"></div>
-    <button type="button" class="add-btn" data-add="segments">+ Add scripture segment</button>
-  </fieldset>
-
-  <!-- 4. CLOSING PRAYER -->
-  <fieldset>
-    <legend>4 · Closing Prayer Points</legend>
-    <div id="prayerPoints"></div>
-    <button type="button" class="add-btn" data-add="prayerPoints">+ Add prayer point</button>
-  </fieldset>
-
-  <!-- 5. NEXT WEEK GROWTH -->
-  <fieldset>
-    <legend>5 · Growth Steps for Next Week</legend>
-    <div class="row2">
-      <div>
-        <label class="field" for="nextInward">Inward growth step</label>
-        <textarea id="nextInward" name="nextInward"></textarea>
-      </div>
-      <div>
-        <label class="field" for="nextOutward">Outward growth step</label>
-        <textarea id="nextOutward" name="nextOutward"></textarea>
-      </div>
-    </div>
-  </fieldset>
-
-  <div class="actions">
-    <button type="button" class="btn ghost" id="btnClear">Clear Form</button>
-    <button type="submit" class="btn primary">⬇ Download Word Document</button>
-  </div>
-</form>
+</div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 /* =====================================================================
+   FONTS
+   ===================================================================== */
+const FONTS = ["Georgia","Cambria","Garamond","Book Antiqua","Palatino Linotype","Times New Roman","Arial","Calibri","Helvetica","Verdana","Tahoma","Trebuchet MS","Century Gothic"];
+const SERIF = new Set(["Georgia","Cambria","Garamond","Book Antiqua","Palatino Linotype","Times New Roman"]);
+function ff(name) { return `'${name}', ${SERIF.has(name) ? "serif" : "sans-serif"}`; }
+
+/* =====================================================================
+   DEFAULT STYLE + BUILT-IN PROFILES
+   ===================================================================== */
+const DEFAULT_STYLE = {
+  titleFont: "Georgia", titleSize: 24, titleColor: "#3a4a7a", titleBold: true,
+  headingFont: "Arial", headingSize: 11, headingColor: "#3a4a7a", headingBold: true,
+  bodyFont: "Georgia", bodySize: 11, bodyColor: "#1f2430",
+  accentColor: "#b07a2f"
+};
+const BUILTIN_PROFILES = {
+  "Classic":     Object.assign({}, DEFAULT_STYLE, { compact: 1.0 }),
+  "Ink Saver":   { titleFont:"Calibri", titleSize:18, titleColor:"#000000", titleBold:true, headingFont:"Calibri", headingSize:10, headingColor:"#000000", headingBold:true, bodyFont:"Calibri", bodySize:10, bodyColor:"#000000", accentColor:"#444444", compact:0.7 },
+  "Large Print": { titleFont:"Georgia", titleSize:28, titleColor:"#3a4a7a", titleBold:true, headingFont:"Arial", headingSize:14, headingColor:"#3a4a7a", headingBold:true, bodyFont:"Georgia", bodySize:14, bodyColor:"#1f2430", accentColor:"#b07a2f", compact:1.25 }
+};
+
+/* =====================================================================
+   STYLE CONTROL DEFINITIONS
+   ===================================================================== */
+const STYLE_CONTROLS = [
+  { group: "Title (study name)", items: [
+    { key: "titleFont", label: "Font", type: "font" },
+    { key: "titleSize", label: "Size (pt)", type: "number", min: 12, max: 48 },
+    { key: "titleColor", label: "Color", type: "color" },
+    { key: "titleBold", label: "Bold", type: "check" } ] },
+  { group: "Section headings", items: [
+    { key: "headingFont", label: "Font", type: "font" },
+    { key: "headingSize", label: "Size (pt)", type: "number", min: 8, max: 28 },
+    { key: "headingColor", label: "Color", type: "color" },
+    { key: "headingBold", label: "Bold", type: "check" } ] },
+  { group: "Body text", items: [
+    { key: "bodyFont", label: "Font", type: "font" },
+    { key: "bodySize", label: "Size (pt)", type: "number", min: 8, max: 18 },
+    { key: "bodyColor", label: "Color", type: "color" } ] },
+  { group: "Accent (labels, dividers, leader box)", items: [
+    { key: "accentColor", label: "Color", type: "color" } ] }
+];
+
+/* =====================================================================
    EXAMPLE CONTENT (pre-fills the form as an editable template)
+   Scripture text uses the public-domain King James Version.
    ===================================================================== */
 const EXAMPLE = {
   study: "The Book of James",
@@ -204,6 +284,7 @@ const EXAMPLE = {
   segments: [
     {
       passage: "James 1:2–8",
+      scriptureText: "My brethren, count it all joy when ye fall into divers temptations; knowing this, that the trying of your faith worketh patience. But let patience have her perfect work, that ye may be perfect and entire, wanting nothing. If any of you lack wisdom, let him ask of God, that giveth to all men liberally, and upbraideth not; and it shall be given him. But let him ask in faith, nothing wavering. For he that wavereth is like a wave of the sea driven with the wind and tossed.",
       summary: "James tells believers to count trials as joy because testing produces perseverance, which matures our faith. He promises that anyone who lacks wisdom can ask God, who gives generously — but we must ask in faith, not doubting.",
       leaderNotes: "Watch for people who hear 'count it joy' as 'pretend everything's fine.' Clarify that joy here is confidence in what God is doing, not denial of pain. Be ready to share a real trial of your own first to set the tone.",
       transition: "Let's talk honestly about a trial we're each in the middle of right now.",
@@ -216,6 +297,7 @@ const EXAMPLE = {
     },
     {
       passage: "James 1:19–25",
+      scriptureText: "Wherefore, my beloved brethren, let every man be swift to hear, slow to speak, slow to wrath: for the wrath of man worketh not the righteousness of God. But be ye doers of the word, and not hearers only, deceiving your own selves. For if any be a hearer of the word, and not a doer, he is like unto a man beholding his natural face in a glass: for he beholdeth himself, and goeth his way, and straightway forgetteth what manner of man he was.",
       summary: "Be quick to listen, slow to speak, slow to anger. James warns against merely hearing the word without doing it — like a person who looks in a mirror and immediately forgets what they saw. The one who acts on the word is blessed.",
       leaderNotes: "The 'mirror' image lands well if you make it concrete. Ask what they 'forgot' from last week's focus — tie it back to the inward/outward steps we set.",
       transition: "James says a hearer forgets but a doer is blessed — so let's get specific about doing.",
@@ -241,12 +323,34 @@ const BLANK = {
   announcements: [""], iceBreaker: "", focusInward: "", focusOutward: "",
   segments: [newSegment()], prayerPoints: [""], nextInward: "", nextOutward: ""
 };
-function newSegment() {
-  return { passage: "", summary: "", leaderNotes: "", transition: "", questions: [""], relatedVerses: [""] };
-}
+function newSegment() { return { passage: "", scriptureText: "", summary: "", leaderNotes: "", transition: "", questions: [""], relatedVerses: [""] }; }
 
 /* =====================================================================
-   BUILD THE FORM FROM A DATA OBJECT
+   STATE + PERSISTENCE
+   ===================================================================== */
+const KEY_WORKING = "churchStudyGuide.working.v2";     // last-used style + compact
+const KEY_PROFILES = "churchStudyGuide.profiles.v2";   // saved named profiles
+
+let style = Object.assign({}, DEFAULT_STYLE);
+let compact = 1.0;
+
+function loadProfiles() {
+  try {
+    const raw = localStorage.getItem(KEY_PROFILES);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  const seed = { list: structuredClone(BUILTIN_PROFILES), active: "Classic" };
+  saveProfiles(seed);
+  return seed;
+}
+function saveProfiles(p) { try { localStorage.setItem(KEY_PROFILES, JSON.stringify(p)); } catch (e) {} }
+let profiles = loadProfiles();
+
+function saveWorking() { try { localStorage.setItem(KEY_WORKING, JSON.stringify({ style, compact })); } catch (e) {} }
+function loadWorking() { try { const raw = localStorage.getItem(KEY_WORKING); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
+
+/* =====================================================================
+   CONTENT FORM
    ===================================================================== */
 function fillForm(d) {
   ["study","week","description","iceBreaker","focusInward","focusOutward","nextInward","nextOutward"]
@@ -255,50 +359,42 @@ function fillForm(d) {
   renderStringList("prayerPoints", d.prayerPoints, "One prayer point…");
   renderSegments(d.segments);
 }
-
 function renderStringList(containerId, arr, placeholder) {
-  const box = document.getElementById(containerId);
-  box.innerHTML = "";
+  const box = document.getElementById(containerId); box.innerHTML = "";
   (arr && arr.length ? arr : [""]).forEach(val => box.appendChild(stringItem(containerId, val, placeholder)));
 }
 function stringItem(containerId, val, placeholder) {
   const item = document.createElement("div"); item.className = "list-item";
-  const ta = document.createElement("textarea"); ta.rows = 2; ta.value = val || ""; ta.placeholder = placeholder;
-  ta.setAttribute("data-list", containerId);
+  const ta = document.createElement("textarea"); ta.rows = 2; ta.value = val || ""; ta.placeholder = placeholder; ta.setAttribute("data-list", containerId);
   const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove";
   rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.children.length) box.appendChild(stringItem(containerId, "", placeholder)); });
   item.append(ta, rm); return item;
 }
-
 function renderSegments(arr) {
   const box = document.getElementById("segments"); box.innerHTML = "";
   (arr && arr.length ? arr : [newSegment()]).forEach(seg => box.appendChild(segmentEl(seg)));
+  renumberSegments();
 }
 function segmentEl(seg) {
   const wrap = document.createElement("div"); wrap.className = "segment"; wrap.setAttribute("data-segment", "");
-
   const head = document.createElement("div"); head.className = "segment-head";
   const h = document.createElement("h4"); h.textContent = "Segment";
   const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove segment";
-  rm.addEventListener("click", () => { const box = wrap.parentElement; wrap.remove(); renumberSegments(); if (!box.children.length) box.appendChild(segmentEl(newSegment())); });
+  rm.addEventListener("click", () => { const box = wrap.parentElement; wrap.remove(); renumberSegments(); if (!box.children.length) box.appendChild(segmentEl(newSegment())); renumberSegments(); });
   head.append(h, rm); wrap.appendChild(head);
 
   wrap.appendChild(fieldInput("passage", "Scripture to read", seg.passage, "e.g. James 1:2–8"));
+  wrap.appendChild(fieldArea("scriptureText", "Scripture text — what it says", seg.scriptureText, "Paste the passage here from your preferred translation."));
   wrap.appendChild(fieldArea("summary", "Summary of the passage", seg.summary));
   wrap.appendChild(fieldArea("leaderNotes", "Key notes for leaders", seg.leaderNotes));
   wrap.appendChild(fieldArea("transition", "Transition into the questions", seg.transition));
-
   wrap.appendChild(subLegend("Questions to ask"));
   wrap.appendChild(nestedList("questions", seg.questions, "Type a question…", false));
-
   wrap.appendChild(subLegend("Related verses"));
   wrap.appendChild(nestedList("relatedVerses", seg.relatedVerses, "e.g. Romans 5:3–5", true));
-
   return wrap;
 }
-function renumberSegments() {
-  document.querySelectorAll('[data-segment] .segment-head h4').forEach((h, i) => h.textContent = "Segment " + (i + 1));
-}
+function renumberSegments() { document.querySelectorAll('[data-segment] .segment-head h4').forEach((h, i) => h.textContent = "Segment " + (i + 1)); }
 function subLegend(text) { const d = document.createElement("div"); d.className = "sub-legend"; d.textContent = text; return d; }
 function fieldInput(key, labelText, val, placeholder) {
   const div = document.createElement("div");
@@ -306,17 +402,16 @@ function fieldInput(key, labelText, val, placeholder) {
   const inp = document.createElement("input"); inp.type = "text"; inp.value = val || ""; inp.placeholder = placeholder || ""; inp.setAttribute("data-key", key);
   div.append(lab, inp); return div;
 }
-function fieldArea(key, labelText, val) {
+function fieldArea(key, labelText, val, placeholder) {
   const div = document.createElement("div");
   const lab = document.createElement("label"); lab.className = "field"; lab.textContent = labelText;
-  const ta = document.createElement("textarea"); ta.value = val || ""; ta.setAttribute("data-key", key);
+  const ta = document.createElement("textarea"); ta.value = val || ""; if (placeholder) ta.placeholder = placeholder; ta.setAttribute("data-key", key);
   div.append(lab, ta); return div;
 }
 function nestedList(key, arr, placeholder, short) {
   const div = document.createElement("div"); div.setAttribute("data-nested", key);
   (arr && arr.length ? arr : [""]).forEach(val => div.appendChild(nestedItem(key, val, placeholder, short)));
-  const add = document.createElement("button"); add.type = "button"; add.className = "add-btn";
-  add.textContent = short ? "+ Add verse" : "+ Add question";
+  const add = document.createElement("button"); add.type = "button"; add.className = "add-btn"; add.textContent = short ? "+ Add verse" : "+ Add question";
   add.addEventListener("click", () => div.insertBefore(nestedItem(key, "", placeholder, short), add));
   div.appendChild(add); return div;
 }
@@ -329,93 +424,87 @@ function nestedItem(key, val, placeholder, short) {
   rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.querySelector('[data-item]')) box.insertBefore(nestedItem(key, "", placeholder, short), box.querySelector('.add-btn')); });
   item.append(input, rm); return item;
 }
-
-/* =====================================================================
-   READ THE FORM BACK INTO A DATA OBJECT
-   ===================================================================== */
 function collect() {
   const g = id => document.getElementById(id).value.trim();
   const listVals = containerId => Array.from(document.querySelectorAll(`#${containerId} [data-list="${containerId}"]`)).map(el => el.value.trim()).filter(Boolean);
-
   const segments = Array.from(document.querySelectorAll('[data-segment]')).map(seg => {
     const val = key => { const el = seg.querySelector(`[data-key="${key}"]`); return el ? el.value.trim() : ""; };
     const nested = key => Array.from(seg.querySelectorAll(`[data-nested="${key}"] [data-item="${key}"]`)).map(el => el.value.trim()).filter(Boolean);
-    return {
-      passage: val("passage"), summary: val("summary"), leaderNotes: val("leaderNotes"),
-      transition: val("transition"), questions: nested("questions"), relatedVerses: nested("relatedVerses")
-    };
-  }).filter(s => s.passage || s.summary || s.leaderNotes || s.transition || s.questions.length || s.relatedVerses.length);
-
+    return { passage: val("passage"), scriptureText: val("scriptureText"), summary: val("summary"), leaderNotes: val("leaderNotes"), transition: val("transition"), questions: nested("questions"), relatedVerses: nested("relatedVerses") };
+  }).filter(s => s.passage || s.scriptureText || s.summary || s.leaderNotes || s.transition || s.questions.length || s.relatedVerses.length);
   return {
     study: g("study"), week: g("week"), description: g("description"),
-    announcements: listVals("announcements"),
-    iceBreaker: g("iceBreaker"), focusInward: g("focusInward"), focusOutward: g("focusOutward"),
-    segments,
-    prayerPoints: listVals("prayerPoints"),
-    nextInward: g("nextInward"), nextOutward: g("nextOutward")
+    announcements: listVals("announcements"), iceBreaker: g("iceBreaker"),
+    focusInward: g("focusInward"), focusOutward: g("focusOutward"),
+    segments, prayerPoints: listVals("prayerPoints"), nextInward: g("nextInward"), nextOutward: g("nextOutward")
   };
 }
 
 /* =====================================================================
-   BUILD THE WORD DOCUMENT (.doc = Word-compatible HTML)
+   BUILD THE GUIDE BODY (shared by preview + Word download)
    ===================================================================== */
-function esc(s) {
-  return String(s == null ? "" : s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/\n/g, "<br/>");
-}
+function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>"); }
 function has(v) { return v != null && String(v).trim() !== ""; }
 
-const RULE = '<hr style="border:none;border-top:2px solid #c9cfdd;margin:20pt 0;" />';
+function buildContent(d, S, K) {
+  const sp = n => Math.max(0, +(n * K).toFixed(1));
+  const tw = b => b ? "bold" : "normal";
+  const ruleTop = `2px solid #c9cfdd`;
+  const RULE = `<hr style="border:none;border-top:${ruleTop};margin:${sp(20)}pt 0;" />`;
 
-function buildDocHtml(d) {
-  const C = { primary: "#3a4a7a", accent: "#b07a2f", ink: "#1f2430", soft: "#4a5163", line: "#dde1ea", leaderBg: "#fbf5e9", leaderBr: "#b07a2f" };
-  const label = t => `<p style="font-family:Arial,sans-serif;font-size:9pt;font-weight:bold;letter-spacing:1px;color:${C.accent};margin:10pt 0 2pt;">${esc(t).toUpperCase()}</p>`;
-  const heading = t => `<p style="font-family:Arial,sans-serif;font-size:11pt;font-weight:bold;letter-spacing:1.5px;color:${C.primary};margin:0 0 8pt;border-bottom:1px solid ${C.line};padding-bottom:3pt;">${esc(t).toUpperCase()}</p>`;
-  const para = t => `<p style="margin:2pt 0 0;">${esc(t)}</p>`;
+  const heading = t => `<p style="font-family:${ff(S.headingFont)};font-size:${S.headingSize}pt;font-weight:${tw(S.headingBold)};letter-spacing:1px;color:${S.headingColor};margin:0 0 ${sp(8)}pt;border-bottom:1px solid #dde1ea;padding-bottom:${sp(3)}pt;">${esc(t).toUpperCase()}</p>`;
+  const label = t => `<p style="font-family:${ff(S.headingFont)};font-size:${Math.max(8, S.bodySize - 2)}pt;font-weight:bold;letter-spacing:1px;color:${S.accentColor};margin:${sp(10)}pt 0 ${sp(2)}pt;">${esc(t).toUpperCase()}</p>`;
+  const para = t => `<p style="margin:${sp(2)}pt 0 0;">${esc(t)}</p>`;
+
+  const focusTable = (inward, outward) => {
+    const cell = (cap, txt) => `<td style="width:50%;border:1px solid #dde1ea;background:#fafbfe;padding:${sp(8)}pt ${sp(10)}pt;vertical-align:top;">
+        <p style="font-family:${ff(S.headingFont)};font-size:${Math.max(8, S.bodySize - 2)}pt;font-weight:bold;letter-spacing:1px;color:${S.headingColor};margin:0 0 ${sp(3)}pt;">${cap}</p>
+        <p style="margin:0;">${esc(txt)}</p></td>`;
+    let cells = "";
+    if (has(inward)) cells += cell("INWARD", inward);
+    if (has(outward)) cells += cell("OUTWARD", outward);
+    return `<table style="width:100%;border-collapse:collapse;margin:${sp(4)}pt 0 0;"><tr>${cells}</tr></table>`;
+  };
+  const leaderTable = txt => `<table style="width:100%;border-collapse:collapse;margin:${sp(6)}pt 0;"><tr>
+      <td style="border:1px solid ${S.accentColor};border-left:4px solid ${S.accentColor};background:#fbf5e9;padding:${sp(8)}pt ${sp(12)}pt;">
+        <p style="font-family:${ff(S.headingFont)};font-size:${Math.max(8, S.bodySize - 2)}pt;font-weight:bold;letter-spacing:1px;color:${S.accentColor};margin:0 0 ${sp(3)}pt;">KEY NOTES FOR LEADERS</p>
+        <p style="margin:0;">${esc(txt)}</p></td></tr></table>`;
+  const scriptureBox = txt => `<table style="width:100%;border-collapse:collapse;margin:${sp(4)}pt 0 ${sp(8)}pt;"><tr>
+      <td style="border-left:3px solid ${S.accentColor};background:#f7f8fb;padding:${sp(7)}pt ${sp(12)}pt;font-style:italic;">
+        <p style="margin:0;">${esc(txt)}</p></td></tr></table>`;
+
   const blocks = [];
 
   // 1. TITLE
   let title = `<div style="text-align:center;">
-      <p style="font-family:Georgia,serif;font-size:24pt;font-weight:bold;color:${C.primary};margin:0 0 4pt;">${esc(d.study) || "Study Title"}</p>`;
-  if (has(d.week)) title += `<p style="font-family:Arial,sans-serif;font-size:10pt;letter-spacing:1.5px;color:${C.accent};font-weight:bold;margin:2pt 0 8pt;">${esc(d.week).toUpperCase()}</p>`;
-  if (has(d.description)) title += `<p style="font-style:italic;color:${C.soft};font-size:12pt;margin:0;">${esc(d.description)}</p>`;
+      <p style="font-family:${ff(S.titleFont)};font-size:${S.titleSize}pt;font-weight:${tw(S.titleBold)};color:${S.titleColor};margin:0 0 ${sp(4)}pt;">${esc(d.study) || "Study Title"}</p>`;
+  if (has(d.week)) title += `<p style="font-family:${ff(S.headingFont)};font-size:${Math.max(8, S.bodySize - 1)}pt;letter-spacing:1.5px;color:${S.accentColor};font-weight:bold;margin:${sp(2)}pt 0 ${sp(8)}pt;">${esc(d.week).toUpperCase()}</p>`;
+  if (has(d.description)) title += `<p style="font-style:italic;color:${S.bodyColor};font-size:${S.bodySize + 1}pt;margin:0;">${esc(d.description)}</p>`;
   title += `</div>`;
   blocks.push(title);
 
   // 2. WEEKLY UPDATES
   let updates = heading("Weekly Updates");
-  if (d.announcements.length) {
-    updates += label("Announcements");
-    updates += `<ul style="margin:2pt 0 0;padding-left:20pt;">${d.announcements.map(a => `<li style="margin:3pt 0;">${esc(a)}</li>`).join("")}</ul>`;
-  }
+  if (d.announcements.length) { updates += label("Announcements"); updates += `<ul style="margin:${sp(2)}pt 0 0;padding-left:20pt;">${d.announcements.map(a => `<li style="margin:${sp(3)}pt 0;">${esc(a)}</li>`).join("")}</ul>`; }
   if (has(d.iceBreaker)) { updates += label("Ice Breaker"); updates += para(d.iceBreaker); }
-  if (has(d.focusInward) || has(d.focusOutward)) {
-    updates += label("Last Week's Growth Focus");
-    updates += focusTable(d.focusInward, d.focusOutward, C);
-  }
+  if (has(d.focusInward) || has(d.focusOutward)) { updates += label("Last Week's Growth Focus"); updates += focusTable(d.focusInward, d.focusOutward); }
   blocks.push(updates);
 
   // 3. BODY SEGMENTS
   if (d.segments.length) {
     let body = heading("Scripture & Discussion");
     d.segments.forEach((seg, idx) => {
-      if (idx > 0) body += `<hr style="border:none;border-top:1px dashed ${C.line};margin:16pt 0;" />`;
+      if (idx > 0) body += `<hr style="border:none;border-top:1px dashed #dde1ea;margin:${sp(16)}pt 0;" />`;
       if (has(seg.passage)) {
-        body += `<p style="font-family:Georgia,serif;font-size:15pt;font-weight:bold;color:${C.primary};margin:0 0 1pt;">${esc(seg.passage)}</p>`;
-        body += `<p style="font-family:Arial,sans-serif;font-size:9pt;font-style:italic;color:${C.soft};margin:0 0 6pt;">Read together: ${esc(seg.passage)}</p>`;
+        body += `<p style="font-family:${ff(S.titleFont)};font-size:${Math.round(S.bodySize * 1.35)}pt;font-weight:bold;color:${S.titleColor};margin:0 0 ${sp(1)}pt;">${esc(seg.passage)}</p>`;
+        body += `<p style="font-family:${ff(S.headingFont)};font-size:${Math.max(8, S.bodySize - 2)}pt;font-style:italic;color:#4a5163;margin:0 0 ${sp(4)}pt;">Read together: ${esc(seg.passage)}</p>`;
       }
+      if (has(seg.scriptureText)) body += scriptureBox(seg.scriptureText);
       if (has(seg.summary)) { body += label("Summary"); body += para(seg.summary); }
-      if (has(seg.leaderNotes)) body += leaderTable(seg.leaderNotes, C);
-      if (has(seg.transition)) body += `<p style="font-style:italic;color:${C.soft};margin:8pt 0 0;">${esc(seg.transition)}</p>`;
-      if (seg.questions.length) {
-        body += label("Questions");
-        body += `<ol style="margin:2pt 0 0;padding-left:20pt;">${seg.questions.map(q => `<li style="margin:4pt 0;">${esc(q)}</li>`).join("")}</ol>`;
-      }
-      if (seg.relatedVerses.length) {
-        body += label("Related Verses");
-        body += `<p style="margin:2pt 0 0;color:${C.soft};">${seg.relatedVerses.map(v => esc(v)).join(" &nbsp;•&nbsp; ")}</p>`;
-      }
+      if (has(seg.leaderNotes)) body += leaderTable(seg.leaderNotes);
+      if (has(seg.transition)) body += `<p style="font-style:italic;color:#4a5163;margin:${sp(8)}pt 0 0;">${esc(seg.transition)}</p>`;
+      if (seg.questions.length) { body += label("Questions"); body += `<ol style="margin:${sp(2)}pt 0 0;padding-left:20pt;">${seg.questions.map(q => `<li style="margin:${sp(4)}pt 0;">${esc(q)}</li>`).join("")}</ol>`; }
+      if (seg.relatedVerses.length) { body += label("Related Verses"); body += `<p style="margin:${sp(2)}pt 0 0;color:#4a5163;">${seg.relatedVerses.map(v => esc(v)).join(" &nbsp;•&nbsp; ")}</p>`; }
     });
     blocks.push(body);
   }
@@ -423,102 +512,200 @@ function buildDocHtml(d) {
   // 4. CLOSING PRAYER
   if (d.prayerPoints.length) {
     let pr = heading("Closing Prayer Points");
-    pr += `<ul style="margin:2pt 0 0;padding-left:20pt;">${d.prayerPoints.map(p => `<li style="margin:3pt 0;">${esc(p)}</li>`).join("")}</ul>`;
+    pr += `<ul style="margin:${sp(2)}pt 0 0;padding-left:20pt;">${d.prayerPoints.map(p => `<li style="margin:${sp(3)}pt 0;">${esc(p)}</li>`).join("")}</ul>`;
     blocks.push(pr);
   }
 
-  // 5. NEXT WEEK GROWTH STEPS
+  // 5. NEXT WEEK GROWTH
   if (has(d.nextInward) || has(d.nextOutward)) {
     let gr = heading("Growth Steps for Next Week");
-    gr += focusTable(d.nextInward, d.nextOutward, C);
+    gr += focusTable(d.nextInward, d.nextOutward);
     blocks.push(gr);
   }
 
-  const content = blocks.join(RULE);
+  return blocks.join(RULE);
+}
 
+function buildDocHtml(d, S, K) {
+  const pageMargin = (0.3 + 0.6 * K).toFixed(2);
+  const lh = (1.1 + 0.4 * K).toFixed(2);
+  const content = buildContent(d, S, K);
   const pre = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="utf-8"><title>${esc(d.study) || "Study Guide"}</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
 <style>
-  @page { size: 8.5in 11in; margin: 0.9in 0.9in; }
-  body { font-family: Georgia, "Times New Roman", serif; font-size: 11pt; color: ${C.ink}; line-height: 1.5; }
-  li { line-height: 1.4; }
+  @page { size: 8.5in 11in; margin: ${pageMargin}in; }
+  body { font-family: ${ff(S.bodyFont)}; font-size: ${S.bodySize}pt; color: ${S.bodyColor}; line-height: ${lh}; }
+  li { line-height: ${lh}; }
 </style></head><body>`;
-  const post = `</body></html>`;
-  return pre + content + post;
+  return pre + content + `</body></html>`;
 }
 
-// Two-column shaded table for inward/outward focus (Word renders tables reliably)
-function focusTable(inward, outward, C) {
-  const cell = (cap, txt) => `<td style="width:50%;border:1px solid ${C.line};background:#fafbfe;padding:8pt 10pt;vertical-align:top;">
-      <p style="font-family:Arial,sans-serif;font-size:9pt;font-weight:bold;letter-spacing:1px;color:${C.primary};margin:0 0 3pt;">${cap}</p>
-      <p style="margin:0;">${esc(txt)}</p></td>`;
-  let cells = "";
-  if (has(inward)) cells += cell("INWARD", inward);
-  if (has(outward)) cells += cell("OUTWARD", outward);
-  return `<table style="width:100%;border-collapse:collapse;margin:4pt 0 0;"><tr>${cells}</tr></table>`;
+/* =====================================================================
+   STYLING TAB: controls, profiles, preview
+   ===================================================================== */
+function buildStyleControls() {
+  const root = document.getElementById("styleControls"); root.innerHTML = "";
+  STYLE_CONTROLS.forEach(grp => {
+    const card = document.createElement("div"); card.className = "style-card";
+    const h = document.createElement("h3"); h.textContent = grp.group; card.appendChild(h);
+    grp.items.forEach(item => {
+      const row = document.createElement("div"); row.className = "ctl";
+      const lab = document.createElement("label"); lab.textContent = item.label;
+      let input;
+      if (item.type === "font") {
+        input = document.createElement("select");
+        FONTS.forEach(f => { const o = document.createElement("option"); o.value = f; o.textContent = f; o.style.fontFamily = ff(f); input.appendChild(o); });
+      } else if (item.type === "number") {
+        input = document.createElement("input"); input.type = "number"; input.min = item.min; input.max = item.max;
+      } else if (item.type === "color") {
+        input = document.createElement("input"); input.type = "color";
+      } else if (item.type === "check") {
+        input = document.createElement("input"); input.type = "checkbox";
+      }
+      input.setAttribute("data-style", item.key);
+      input.addEventListener("input", onStyleChange);
+      input.addEventListener("change", onStyleChange);
+      row.append(lab, input); card.appendChild(row);
+    });
+    root.appendChild(card);
+  });
+  syncStyleControls();
+}
+function syncStyleControls() {
+  document.querySelectorAll("[data-style]").forEach(el => {
+    const key = el.getAttribute("data-style");
+    if (el.type === "checkbox") el.checked = !!style[key];
+    else el.value = style[key];
+  });
+}
+function onStyleChange(e) {
+  const el = e.target; const key = el.getAttribute("data-style");
+  if (el.type === "checkbox") style[key] = el.checked;
+  else if (el.type === "number") style[key] = parseFloat(el.value) || 0;
+  else style[key] = el.value;
+  saveWorking(); renderPreview();
 }
 
-// Shaded callout box for leader notes
-function leaderTable(txt, C) {
-  return `<table style="width:100%;border-collapse:collapse;margin:6pt 0;"><tr>
-    <td style="border:1px solid ${C.leaderBr};border-left:4px solid ${C.accent};background:${C.leaderBg};padding:8pt 12pt;">
-      <p style="font-family:Arial,sans-serif;font-size:9pt;font-weight:bold;letter-spacing:1px;color:${C.accent};margin:0 0 3pt;">KEY NOTES FOR LEADERS</p>
-      <p style="margin:0;">${esc(txt)}</p>
-    </td></tr></table>`;
+function refreshProfileSelect() {
+  const sel = document.getElementById("profileSelect"); sel.innerHTML = "";
+  Object.keys(profiles.list).forEach(name => { const o = document.createElement("option"); o.value = name; o.textContent = name; sel.appendChild(o); });
+  if (profiles.active && profiles.list[profiles.active]) sel.value = profiles.active;
 }
+function applyProfile(name) {
+  const p = profiles.list[name]; if (!p) return;
+  const { compact: c, ...styleFields } = p;
+  style = Object.assign({}, DEFAULT_STYLE, styleFields);
+  compact = typeof c === "number" ? c : 1.0;
+  profiles.active = name; saveProfiles(profiles); saveWorking();
+  syncStyleControls(); syncCompact(); renderPreview();
+}
+
+function previewData() { const d = collect(); return (d.study || d.segments.length || d.announcements.length) ? d : EXAMPLE; }
+function renderPreview() {
+  const el = document.getElementById("stylePreview"); if (!el) return;
+  const lh = (1.1 + 0.4 * compact).toFixed(2);
+  const inner = buildContent(previewData(), style, compact);
+  el.innerHTML = `<div style="font-family:${ff(style.bodyFont)};font-size:${style.bodySize}pt;color:${style.bodyColor};line-height:${lh};background:#fff;padding:26px 30px;">${inner}</div>`;
+}
+
+/* =====================================================================
+   COMPACTNESS SLIDER
+   ===================================================================== */
+function compactLabel(v) { return v < 0.82 ? "Compact" : v > 1.18 ? "Spacious" : "Balanced"; }
+function syncCompact() {
+  document.getElementById("compact").value = compact;
+  document.getElementById("compactVal").textContent = compactLabel(compact);
+}
+document.getElementById("compact").addEventListener("input", (e) => {
+  compact = parseFloat(e.target.value);
+  document.getElementById("compactVal").textContent = compactLabel(compact);
+  saveWorking(); renderPreview();
+});
 
 /* =====================================================================
    DOWNLOAD
    ===================================================================== */
-function downloadDoc(d) {
-  const html = buildDocHtml(d);
+function downloadDoc() {
+  const d = collect();
+  if (!d.study) { alert("Please enter what you're studying (the title) before downloading."); switchTab("content"); document.getElementById("study").focus(); return; }
+  const html = buildDocHtml(d, style, compact);
   const blob = new Blob(["﻿", html], { type: "application/msword" });
   const name = (d.study || "study-guide").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const week = (d.week || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const fname = ([name, week].filter(Boolean).join("_") || "study-guide") + ".doc";
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob); a.download = fname;
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = fname;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   showToast("Downloaded " + fname);
 }
-
-function showToast(msg) {
-  const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show");
-  clearTimeout(showToast._t); showToast._t = setTimeout(() => t.classList.remove("show"), 2600);
-}
+function showToast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(showToast._t); showToast._t = setTimeout(() => t.classList.remove("show"), 2600); }
 
 /* =====================================================================
-   WIRE UP
+   TABS
+   ===================================================================== */
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.getAttribute("data-tab") === name));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === "panel-" + name));
+  if (name === "styling") renderPreview();
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.getAttribute("data-tab"))));
+
+/* =====================================================================
+   WIRE UP BUTTONS
    ===================================================================== */
 document.querySelectorAll("[data-add]").forEach(btn => {
   btn.addEventListener("click", () => {
     const key = btn.getAttribute("data-add");
-    if (key === "segments") {
-      const box = document.getElementById("segments"); box.appendChild(segmentEl(newSegment())); renumberSegments();
-    } else {
-      const box = document.getElementById(key);
-      const ph = key === "announcements" ? "One announcement…" : "One prayer point…";
-      box.appendChild(stringItem(key, "", ph));
-    }
+    if (key === "segments") { document.getElementById("segments").appendChild(segmentEl(newSegment())); renumberSegments(); }
+    else { const ph = key === "announcements" ? "One announcement…" : "One prayer point…"; document.getElementById(key).appendChild(stringItem(key, "", ph)); }
   });
 });
+document.getElementById("btnDownload").addEventListener("click", downloadDoc);
+document.getElementById("btnClear").addEventListener("click", () => { if (confirm("Clear the form and start blank?")) fillForm(structuredClone(BLANK)); });
 
-document.getElementById("guideForm").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const d = collect();
-  if (!d.study) { alert("Please enter what you're studying (the title) before downloading."); document.getElementById("study").focus(); return; }
-  downloadDoc(d);
+document.getElementById("profileSelect").addEventListener("change", (e) => applyProfile(e.target.value));
+document.getElementById("btnProfSave").addEventListener("click", () => {
+  const name = document.getElementById("profileSelect").value;
+  if (!name) return;
+  profiles.list[name] = Object.assign({}, style, { compact });
+  profiles.active = name; saveProfiles(profiles);
+  showToast('Saved profile "' + name + '"');
+});
+document.getElementById("btnProfSaveAs").addEventListener("click", () => {
+  const name = (prompt("Name this style profile:") || "").trim();
+  if (!name) return;
+  profiles.list[name] = Object.assign({}, style, { compact });
+  profiles.active = name; saveProfiles(profiles);
+  refreshProfileSelect(); document.getElementById("profileSelect").value = name;
+  showToast('Saved profile "' + name + '"');
+});
+document.getElementById("btnProfDelete").addEventListener("click", () => {
+  const name = document.getElementById("profileSelect").value;
+  if (!name) return;
+  if (Object.keys(profiles.list).length <= 1) { alert("Keep at least one profile."); return; }
+  if (!confirm('Delete profile "' + name + '"?')) return;
+  delete profiles.list[name];
+  profiles.active = Object.keys(profiles.list)[0];
+  saveProfiles(profiles); refreshProfileSelect(); applyProfile(profiles.active);
+  showToast("Profile deleted");
 });
 
-document.getElementById("btnClear").addEventListener("click", () => {
-  if (confirm("Clear the form and start blank?")) fillForm(structuredClone(BLANK));
-});
-
-// Initial load: pre-fill with the example template
-fillForm(structuredClone(EXAMPLE));
-renumberSegments();
+/* =====================================================================
+   INIT
+   ===================================================================== */
+(function init() {
+  // content
+  fillForm(structuredClone(EXAMPLE));
+  // style + compact: restore last-used working values, else active profile
+  const w = loadWorking();
+  if (w && w.style) { style = Object.assign({}, DEFAULT_STYLE, w.style); compact = typeof w.compact === "number" ? w.compact : 1.0; }
+  else if (profiles.list[profiles.active]) { const { compact: c, ...sf } = profiles.list[profiles.active]; style = Object.assign({}, DEFAULT_STYLE, sf); compact = typeof c === "number" ? c : 1.0; }
+  buildStyleControls();
+  refreshProfileSelect();
+  syncCompact();
+  renderPreview();
+})();
 </script>
 </body>
 </html>

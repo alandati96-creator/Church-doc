@@ -103,6 +103,28 @@
   .btn.primary:hover { filter: brightness(1.07); }
   .btn.ghost { background: #fff; color: var(--ink-soft); border: 1px solid var(--line); }
   .btn.ghost:hover { background: #f4f6fa; }
+  .btn.sm { font-size: 13px; padding: 9px 14px; }
+
+  /* Content toolbar (top of Guide Content tab) */
+  .content-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+  .content-toolbar .saved { margin-left: auto; font-size: 12px; color: #6b7280; font-weight: 600; }
+  .content-toolbar .saved.flash { color: var(--primary); }
+
+  /* Reorder controls */
+  .move-group { display: inline-flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
+  .move-btn { border: 1px solid var(--line); background: #fff; color: var(--primary); border-radius: 5px; width: 26px; height: 17px; cursor: pointer; font-size: 10px; line-height: 1; padding: 0; }
+  .move-btn:hover:not(:disabled) { background: #eef1fb; }
+  .move-btn:disabled { opacity: .3; cursor: default; }
+  .segment-head .move-group { flex-direction: row; }
+  .segment-head .move-btn { width: 28px; height: 24px; font-size: 12px; }
+
+  /* Scripture fetch row */
+  .fetch-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 2px; }
+  .fetch-row select { font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+  .fetch-row .fetch-btn { font: inherit; font-size: 13px; font-weight: 600; color: #fff; background: var(--primary-2); border: none; border-radius: 7px; padding: 8px 14px; cursor: pointer; }
+  .fetch-row .fetch-btn:hover { filter: brightness(1.06); }
+  .fetch-row .fetch-btn:disabled { opacity: .6; cursor: default; }
+  .fetch-row .note { font-size: 11.5px; color: #6b7280; }
 
   .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%) translateY(20px); background: var(--primary); color: #fff; padding: 12px 20px; border-radius: 30px; font-size: 14px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,.25); opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -124,9 +146,17 @@
   <section class="panel active" id="panel-content">
     <div class="hint">
       The fields below are pre-filled with an example so you can see what goes where — just replace
-      the text with your own. Use <strong>+ Add</strong> buttons for extra items. Adjust the look in the
-      <strong>Styling</strong> tab and the spacing with the slider at the bottom, then click
-      <strong>Download Word Document</strong>.
+      the text with your own. Use <strong>+ Add</strong> buttons for extra items and the <strong>↑ ↓</strong>
+      arrows to reorder. Your work auto-saves in this browser; use <strong>Save Guide</strong> to keep a
+      copy you can reopen later. Adjust the look in the <strong>Styling</strong> tab, then export at the bottom.
+    </div>
+    <div class="content-toolbar">
+      <button type="button" class="btn ghost sm" id="btnOpenGuide">📂 Open Guide</button>
+      <button type="button" class="btn ghost sm" id="btnSaveGuide">💾 Save Guide</button>
+      <button type="button" class="btn ghost sm" id="btnExample">Load Example</button>
+      <button type="button" class="btn ghost sm" id="btnClear">Clear</button>
+      <span class="saved" id="savedState">All changes saved</span>
+      <input type="file" id="guideFile" accept="application/json,.json" style="display:none" />
     </div>
     <form id="guideForm">
       <!-- 1. TITLE -->
@@ -228,8 +258,9 @@
       </div>
     </div>
     <div class="actions">
-      <button type="button" class="btn ghost" id="btnClear">Clear</button>
-      <button type="button" class="btn primary" id="btnDownload">⬇ Download Word Document</button>
+      <button type="button" class="btn ghost sm" id="btnPrint" title="Open a print view — choose your printer or 'Save as PDF'">🖨 PDF</button>
+      <button type="button" class="btn ghost sm" id="btnDownloadDoc" title="Word-compatible .doc (opens in Word & Google Docs)">.doc</button>
+      <button type="button" class="btn primary sm" id="btnDownloadDocx" title="Modern Word .docx">⬇ Word (.docx)</button>
     </div>
   </div>
 </div>
@@ -347,6 +378,12 @@ function newSegment() { return { passage: "", scriptureText: "", summary: "", le
    ===================================================================== */
 const KEY_WORKING = "churchStudyGuide.working.v3";     // last-used style + layout
 const KEY_PROFILES = "churchStudyGuide.profiles.v3";   // saved named profiles
+const KEY_CONTENT = "churchStudyGuide.content.v1";     // auto-saved guide content
+const KEY_TRANS = "churchStudyGuide.translation.v1";   // last-used Bible translation
+
+const TRANSLATIONS = ["NIV", "NLT", "ESV", "NASB", "KJV"];
+let lastTranslation = "KJV";
+try { const t = localStorage.getItem(KEY_TRANS); if (t && TRANSLATIONS.includes(t)) lastTranslation = t; } catch (e) {}
 
 let style = Object.assign({}, DEFAULT_STYLE);
 let compact = DEFAULT_LAYOUT.compact;
@@ -368,6 +405,34 @@ let profiles = loadProfiles();
 function saveWorking() { try { localStorage.setItem(KEY_WORKING, JSON.stringify({ style, compact, lineSpacing, margin })); } catch (e) {} }
 function loadWorking() { try { const raw = localStorage.getItem(KEY_WORKING); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 
+/* Auto-save of the guide content itself */
+let contentTimer;
+function autosave() {
+  clearTimeout(contentTimer);
+  contentTimer = setTimeout(() => {
+    try { localStorage.setItem(KEY_CONTENT, JSON.stringify(collect())); } catch (e) {}
+    flashSaved();
+    if (document.getElementById("panel-styling").classList.contains("active")) renderPreview();
+  }, 300);
+}
+function flashSaved() {
+  const el = document.getElementById("savedState"); if (!el) return;
+  el.textContent = "All changes saved"; el.classList.add("flash");
+  clearTimeout(flashSaved._t); flashSaved._t = setTimeout(() => el.classList.remove("flash"), 800);
+}
+function loadContent() { try { const raw = localStorage.getItem(KEY_CONTENT); return raw ? normalizeContent(JSON.parse(raw)) : null; } catch (e) { return null; } }
+function normalizeContent(d) {
+  const out = Object.assign(structuredClone(BLANK), d || {});
+  out.announcements = Array.isArray(out.announcements) && out.announcements.length ? out.announcements : [""];
+  out.prayerPoints = Array.isArray(out.prayerPoints) && out.prayerPoints.length ? out.prayerPoints : [""];
+  out.segments = Array.isArray(out.segments) && out.segments.length ? out.segments.map(s => Object.assign(newSegment(), s)) : [newSegment()];
+  out.segments.forEach(s => {
+    s.questions = Array.isArray(s.questions) && s.questions.length ? s.questions : [""];
+    s.relatedVerses = Array.isArray(s.relatedVerses) && s.relatedVerses.length ? s.relatedVerses : [""];
+  });
+  return out;
+}
+
 /* =====================================================================
    CONTENT FORM
    ===================================================================== */
@@ -377,7 +442,42 @@ function fillForm(d) {
   renderStringList("announcements", d.announcements, "One announcement…");
   renderStringList("prayerPoints", d.prayerPoints, "One prayer point…");
   renderSegments(d.segments);
+  refreshMoveStates();
 }
+
+/* Reorder helpers */
+function moveGroup(node, selector, onAfter) {
+  const g = document.createElement("div"); g.className = "move-group";
+  const up = document.createElement("button"); up.type = "button"; up.className = "move-btn"; up.dataset.dir = "up"; up.textContent = "↑"; up.title = "Move up";
+  const dn = document.createElement("button"); dn.type = "button"; dn.className = "move-btn"; dn.dataset.dir = "down"; dn.textContent = "↓"; dn.title = "Move down";
+  up.addEventListener("click", () => { if (moveNode(node, -1, selector)) { onAfter && onAfter(); autosave(); } });
+  dn.addEventListener("click", () => { if (moveNode(node, 1, selector)) { onAfter && onAfter(); autosave(); } });
+  g.append(up, dn); return g;
+}
+function moveNode(node, dir, selector) {
+  let sib = dir < 0 ? node.previousElementSibling : node.nextElementSibling;
+  while (sib && !sib.matches(selector)) sib = dir < 0 ? sib.previousElementSibling : sib.nextElementSibling;
+  if (!sib) return false;
+  if (dir < 0) node.parentNode.insertBefore(node, sib); else node.parentNode.insertBefore(sib, node);
+  refreshMoveStates(); return true;
+}
+function setEnds(container, selector) {
+  if (!container) return;
+  const items = Array.from(container.children).filter(c => c.matches(selector));
+  items.forEach((it, i) => {
+    const up = it.querySelector(".move-btn[data-dir='up']");
+    const dn = it.querySelector(".move-btn[data-dir='down']");
+    if (up) up.disabled = i === 0;
+    if (dn) dn.disabled = i === items.length - 1;
+  });
+}
+function refreshMoveStates() {
+  setEnds(document.getElementById("segments"), ".segment");
+  setEnds(document.getElementById("announcements"), ".list-item");
+  setEnds(document.getElementById("prayerPoints"), ".list-item");
+  document.querySelectorAll("[data-nested]").forEach(n => setEnds(n, ".list-item"));
+}
+
 function renderStringList(containerId, arr, placeholder) {
   const box = document.getElementById(containerId); box.innerHTML = "";
   (arr && arr.length ? arr : [""]).forEach(val => box.appendChild(stringItem(containerId, val, placeholder)));
@@ -386,8 +486,8 @@ function stringItem(containerId, val, placeholder) {
   const item = document.createElement("div"); item.className = "list-item";
   const ta = document.createElement("textarea"); ta.rows = 2; ta.value = val || ""; ta.placeholder = placeholder; ta.setAttribute("data-list", containerId);
   const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove";
-  rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.children.length) box.appendChild(stringItem(containerId, "", placeholder)); });
-  item.append(ta, rm); return item;
+  rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.children.length) box.appendChild(stringItem(containerId, "", placeholder)); refreshMoveStates(); autosave(); });
+  item.append(moveGroup(item, ".list-item"), ta, rm); return item;
 }
 function renderSegments(arr) {
   const box = document.getElementById("segments"); box.innerHTML = "";
@@ -398,12 +498,19 @@ function segmentEl(seg) {
   const wrap = document.createElement("div"); wrap.className = "segment"; wrap.setAttribute("data-segment", "");
   const head = document.createElement("div"); head.className = "segment-head";
   const h = document.createElement("h4"); h.textContent = "Segment";
+  const right = document.createElement("div"); right.style.cssText = "display:flex;align-items:center;gap:8px;";
   const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove segment";
-  rm.addEventListener("click", () => { const box = wrap.parentElement; wrap.remove(); renumberSegments(); if (!box.children.length) box.appendChild(segmentEl(newSegment())); renumberSegments(); });
-  head.append(h, rm); wrap.appendChild(head);
+  rm.addEventListener("click", () => { const box = wrap.parentElement; wrap.remove(); if (!box.children.length) box.appendChild(segmentEl(newSegment())); renumberSegments(); refreshMoveStates(); autosave(); });
+  right.append(moveGroup(wrap, ".segment", renumberSegments), rm);
+  head.append(h, right); wrap.appendChild(head);
 
-  wrap.appendChild(fieldInput("passage", "Scripture to read", seg.passage, "e.g. James 1:2–8"));
-  wrap.appendChild(fieldArea("scriptureText", "Scripture text — what it says", seg.scriptureText, "Paste the passage here from your preferred translation."));
+  const passageDiv = fieldInput("passage", "Scripture to read", seg.passage, "e.g. James 1:2–8");
+  const passageInput = passageDiv.querySelector("input");
+  const scriptureDiv = fieldArea("scriptureText", "Scripture text — what it says", seg.scriptureText, "Type “Get text” above to fetch, or paste your translation here.");
+  const scriptureBox = scriptureDiv.querySelector("textarea");
+  wrap.appendChild(passageDiv);
+  wrap.appendChild(fetchRow(passageInput, scriptureBox));
+  wrap.appendChild(scriptureDiv);
   wrap.appendChild(fieldArea("summary", "Summary of the passage", seg.summary));
   wrap.appendChild(fieldArea("leaderNotes", "Key notes for leaders", seg.leaderNotes));
   wrap.appendChild(fieldArea("transition", "Transition into the questions", seg.transition));
@@ -412,6 +519,17 @@ function segmentEl(seg) {
   wrap.appendChild(subLegend("Related verses"));
   wrap.appendChild(nestedList("relatedVerses", seg.relatedVerses, "e.g. Romans 5:3–5", true));
   return wrap;
+}
+function fetchRow(passageInput, scriptureBox) {
+  const row = document.createElement("div"); row.className = "fetch-row";
+  const sel = document.createElement("select"); sel.title = "Bible translation";
+  TRANSLATIONS.forEach(t => { const o = document.createElement("option"); o.value = t; o.textContent = t; sel.appendChild(o); });
+  sel.value = lastTranslation;
+  sel.addEventListener("change", () => { lastTranslation = sel.value; try { localStorage.setItem(KEY_TRANS, lastTranslation); } catch (e) {} });
+  const btn = document.createElement("button"); btn.type = "button"; btn.className = "fetch-btn"; btn.textContent = "Get text";
+  btn.addEventListener("click", () => fetchScripture(passageInput.value, sel.value, scriptureBox, btn));
+  const note = document.createElement("span"); note.className = "note"; note.textContent = "KJV fills in automatically; others open Bible Gateway to copy.";
+  row.append(sel, btn, note); return row;
 }
 function renumberSegments() { document.querySelectorAll('[data-segment] .segment-head h4').forEach((h, i) => h.textContent = "Segment " + (i + 1)); }
 function subLegend(text) { const d = document.createElement("div"); d.className = "sub-legend"; d.textContent = text; return d; }
@@ -431,7 +549,7 @@ function nestedList(key, arr, placeholder, short) {
   const div = document.createElement("div"); div.setAttribute("data-nested", key);
   (arr && arr.length ? arr : [""]).forEach(val => div.appendChild(nestedItem(key, val, placeholder, short)));
   const add = document.createElement("button"); add.type = "button"; add.className = "add-btn"; add.textContent = short ? "+ Add verse" : "+ Add question";
-  add.addEventListener("click", () => div.insertBefore(nestedItem(key, "", placeholder, short), add));
+  add.addEventListener("click", () => { div.insertBefore(nestedItem(key, "", placeholder, short), add); refreshMoveStates(); autosave(); });
   div.appendChild(add); return div;
 }
 function nestedItem(key, val, placeholder, short) {
@@ -440,8 +558,8 @@ function nestedItem(key, val, placeholder, short) {
   if (short) input.type = "text"; else input.rows = 2;
   input.value = val || ""; input.placeholder = placeholder; input.setAttribute("data-item", key);
   const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove";
-  rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.querySelector('[data-item]')) box.insertBefore(nestedItem(key, "", placeholder, short), box.querySelector('.add-btn')); });
-  item.append(input, rm); return item;
+  rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.querySelector('[data-item]')) box.insertBefore(nestedItem(key, "", placeholder, short), box.querySelector('.add-btn')); refreshMoveStates(); autosave(); });
+  item.append(moveGroup(item, ".list-item"), input, rm); return item;
 }
 function collect() {
   const g = id => document.getElementById(id).value.trim();
@@ -561,6 +679,206 @@ function buildDocHtml(d, S, K, lh, pageMargin) {
 }
 
 /* =====================================================================
+   SCRIPTURE LOOKUP
+   KJV (public domain) is fetched automatically from bible-api.com.
+   NIV/NLT/ESV/NASB are copyrighted with no free lookup API, so we open
+   Bible Gateway to that passage for the user to copy.
+   ===================================================================== */
+function openBibleGateway(passage, version) {
+  const url = "https://www.biblegateway.com/passage/?search=" + encodeURIComponent(passage) + "&version=" + encodeURIComponent(version);
+  window.open(url, "_blank", "noopener");
+}
+async function fetchScripture(passageRaw, version, box, btn) {
+  const passage = (passageRaw || "").replace(/[‒-―]/g, "-").trim();
+  if (!passage) { alert("Type the passage reference (e.g. James 1:2-8) first."); return; }
+  if (version !== "KJV") {
+    openBibleGateway(passage, version);
+    showToast("Opened " + version + " on Bible Gateway — copy the text into the box.");
+    return;
+  }
+  const original = btn.textContent; btn.disabled = true; btn.textContent = "…";
+  try {
+    const res = await fetch("https://bible-api.com/" + encodeURIComponent(passage) + "?translation=kjv");
+    if (!res.ok) throw new Error("http " + res.status);
+    const j = await res.json();
+    let text = (j.text || (Array.isArray(j.verses) ? j.verses.map(v => v.text).join(" ") : "")).replace(/\s+/g, " ").trim();
+    if (!text) throw new Error("empty");
+    box.value = text; autosave();
+    showToast("Inserted KJV — " + (j.reference || passage));
+  } catch (e) {
+    openBibleGateway(passage, "KJV");
+    showToast("Couldn't auto-fetch — opened Bible Gateway to copy.");
+  } finally { btn.disabled = false; btn.textContent = original; }
+}
+
+/* =====================================================================
+   PRINT / PDF  — render the guide in a hidden iframe and print it.
+   ===================================================================== */
+function validTitle(d) {
+  if (!d.study) { alert("Please enter what you're studying (the title) first."); switchTab("content"); document.getElementById("study").focus(); return false; }
+  return true;
+}
+function exportPDF() {
+  const d = collect(); if (!validTitle(d)) return;
+  const html = buildDocHtml(d, style, compact, lineSpacing, margin);
+  let f = document.getElementById("printFrame");
+  if (!f) { f = document.createElement("iframe"); f.id = "printFrame"; f.setAttribute("aria-hidden", "true"); f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;"; document.body.appendChild(f); }
+  const doc = f.contentWindow.document; doc.open(); doc.write(html); doc.close();
+  setTimeout(() => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { window.print(); } }, 350);
+}
+
+/* =====================================================================
+   TRUE .docx EXPORT — build a minimal OOXML package (zip) by hand,
+   no external libraries so it still works offline.
+   ===================================================================== */
+function xesc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+function buildDocumentXml(d, S, K, ls, mg) {
+  const sp = n => Math.max(0, Math.round(n * K));            // spacing points (scaled by compactness)
+  const line = Math.round(ls * 240);                          // line spacing (240 = single)
+  const hex = c => String(c || "").replace("#", "") || "000000";
+  const runText = t => String(t).split("\n").map(p => `<w:t xml:space="preserve">${xesc(p)}</w:t>`).join("<w:br/>");
+  function run(text, o) {
+    o = o || {};
+    const font = o.font ? `<w:rFonts w:ascii="${xesc(o.font)}" w:hAnsi="${xesc(o.font)}" w:cs="${xesc(o.font)}"/>` : "";
+    const b = o.bold ? "<w:b/>" : "", i = o.italic ? "<w:i/>" : "";
+    const color = o.color ? `<w:color w:val="${hex(o.color)}"/>` : "";
+    const sz = o.size ? `<w:sz w:val="${Math.round(o.size * 2)}"/><w:szCs w:val="${Math.round(o.size * 2)}"/>` : "";
+    const rpr = font + b + i + color + sz;
+    return `<w:r>${rpr ? `<w:rPr>${rpr}</w:rPr>` : ""}${runText(text)}</w:r>`;
+  }
+  function para(runsXml, o) {
+    o = o || {};
+    let ppr = "";
+    if (o.border) ppr += `<w:pBdr><w:bottom w:val="single" w:sz="${o.borderSz || 8}" w:space="1" w:color="${o.borderColor || "c9cfdd"}"/></w:pBdr>`;
+    const after = (o.after != null ? o.after : sp(4)) * 20;
+    const before = (o.before != null ? o.before : 0) * 20;
+    ppr += `<w:spacing w:before="${Math.round(before)}" w:after="${Math.round(after)}" w:line="${line}" w:lineRule="auto"/>`;
+    if (o.indent) ppr += `<w:ind w:left="${o.indent}"${o.hanging ? ` w:hanging="${o.hanging}"` : ""}/>`;
+    if (o.align) ppr += `<w:jc w:val="${o.align}"/>`;
+    return `<w:p><w:pPr>${ppr}</w:pPr>${runsXml || ""}</w:p>`;
+  }
+  const bodyOpts = { font: S.bodyFont, size: S.bodySize, color: S.bodyColor };
+  const brun = (t, o) => run(t, Object.assign({}, bodyOpts, o || {}));
+  const heading = t => para(run(String(t).toUpperCase(), { font: S.headingFont, size: S.headingSize, bold: S.headingBold, color: S.headingColor }), { border: true, borderColor: "dde1ea", borderSz: 6, after: sp(6), before: sp(2) });
+  const label = t => para(run(String(t).toUpperCase(), { font: S.headingFont, size: Math.max(8, S.bodySize - 2), bold: true, color: S.accentColor }), { after: sp(2), before: sp(6) });
+  const cellBorders = accent => `<w:tcBorders><w:top w:val="single" w:sz="4" w:color="dde1ea"/><w:left w:val="single" w:sz="${accent ? 24 : 4}" w:color="${accent || "dde1ea"}"/><w:bottom w:val="single" w:sz="4" w:color="dde1ea"/><w:right w:val="single" w:sz="4" w:color="dde1ea"/></w:tcBorders>`;
+  const cellMar = `<w:tblCellMar><w:top w:w="60" w:type="dxa"/><w:left w:w="140" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:right w:w="140" w:type="dxa"/></w:tblCellMar>`;
+  function box(innerParas, fill, accent) {
+    return `<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/>${cellMar}</w:tblPr><w:tblGrid><w:gridCol w:w="9360"/></w:tblGrid>` +
+      `<w:tr><w:tc><w:tcPr><w:tcW w:w="5000" w:type="pct"/>${cellBorders(accent)}${fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${fill}"/>` : ""}</w:tcPr>${innerParas}</w:tc></w:tr></w:tbl>`;
+  }
+  function focusBox(inward, outward) {
+    const one = (has(inward) ? 1 : 0) + (has(outward) ? 1 : 0);
+    const cell = (cap, txt) => `<w:tc><w:tcPr><w:tcW w:w="${one === 2 ? 2500 : 5000}" w:type="pct"/>${cellBorders(false)}<w:shd w:val="clear" w:color="auto" w:fill="fafbfe"/></w:tcPr>` +
+      para(run(cap, { font: S.headingFont, size: Math.max(8, S.bodySize - 2), bold: true, color: S.headingColor }), { after: sp(2) }) + para(brun(txt), { after: 0 }) + `</w:tc>`;
+    let cells = ""; if (has(inward)) cells += cell("INWARD", inward); if (has(outward)) cells += cell("OUTWARD", outward);
+    const grid = one === 2 ? '<w:gridCol w:w="4680"/><w:gridCol w:w="4680"/>' : '<w:gridCol w:w="9360"/>';
+    return `<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/>${cellMar}</w:tblPr><w:tblGrid>${grid}</w:tblGrid><w:tr>${cells}</w:tr></w:tbl>`;
+  }
+  const hr = () => para("", { border: true, borderColor: "c9cfdd", borderSz: 12, after: sp(12), before: sp(12) });
+
+  const blocks = [];
+
+  // 1. TITLE
+  let title = para(run(d.study || "Study Title", { font: S.titleFont, size: S.titleSize, bold: S.titleBold, color: S.titleColor }), { align: "center", after: sp(4) });
+  if (has(d.week)) title += para(run(d.week.toUpperCase(), { font: S.headingFont, size: Math.max(8, S.bodySize - 1), bold: true, color: S.accentColor }), { align: "center", after: sp(8) });
+  if (has(d.description)) title += para(brun(d.description, { italic: true, size: S.bodySize + 1 }), { align: "center", after: 0 });
+  blocks.push(title);
+
+  // 2. WEEKLY UPDATES
+  let updates = heading("Weekly Updates");
+  if (d.announcements.length) { updates += label("Announcements"); updates += d.announcements.map(a => para(brun("•  " + a), { indent: 360, hanging: 200, after: sp(3) })).join(""); }
+  if (has(d.iceBreaker)) { updates += label("Ice Breaker"); updates += para(brun(d.iceBreaker), { after: 0 }); }
+  if (has(d.focusInward) || has(d.focusOutward)) { updates += label("Last Week's Growth Focus"); updates += focusBox(d.focusInward, d.focusOutward); }
+  blocks.push(updates);
+
+  // 3. BODY SEGMENTS
+  if (d.segments.length) {
+    let body = heading("Scripture & Discussion");
+    d.segments.forEach((seg, idx) => {
+      if (idx > 0) body += para("", { border: true, borderColor: "dde1ea", borderSz: 6, after: sp(8), before: sp(8) });
+      if (has(seg.passage)) {
+        body += para(run(seg.passage, { font: S.titleFont, size: Math.round(S.bodySize * 1.35), bold: true, color: S.titleColor }), { after: sp(1) });
+        body += para(run("Read together: " + seg.passage, { font: S.headingFont, size: Math.max(8, S.bodySize - 2), italic: true, color: "4a5163" }), { after: sp(4) });
+      }
+      if (has(seg.scriptureText)) body += box(para(brun(seg.scriptureText, { italic: true }), { after: 0 }), "f7f8fb", hex(S.accentColor));
+      if (has(seg.summary)) { body += label("Summary"); body += para(brun(seg.summary), { after: 0 }); }
+      if (has(seg.leaderNotes)) body += box(label("Key Notes for Leaders") + para(brun(seg.leaderNotes), { after: 0 }), "fbf5e9", hex(S.accentColor));
+      if (has(seg.transition)) body += para(brun(seg.transition, { italic: true, color: "4a5163" }), { before: sp(8), after: 0 });
+      if (seg.questions.length) { body += label("Questions"); body += seg.questions.map((q, i) => para(brun((i + 1) + ".  " + q), { indent: 360, hanging: 240, after: sp(4) })).join(""); }
+      if (seg.relatedVerses.length) { body += label("Related Verses"); body += para(brun(seg.relatedVerses.join("     •     "), { color: "4a5163" }), { after: 0 }); }
+    });
+    blocks.push(body);
+  }
+
+  // 4. CLOSING PRAYER
+  if (d.prayerPoints.length) {
+    let pr = heading("Closing Prayer Points");
+    pr += d.prayerPoints.map(p => para(brun("•  " + p), { indent: 360, hanging: 200, after: sp(3) })).join("");
+    blocks.push(pr);
+  }
+
+  // 5. GROWTH STEPS
+  if (has(d.nextInward) || has(d.nextOutward)) {
+    blocks.push(heading("Growth Steps for Next Week") + focusBox(d.nextInward, d.nextOutward));
+  }
+
+  const mgTw = Math.round(mg * 1440);
+  const sect = `<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="${mgTw}" w:right="${mgTw}" w:bottom="${mgTw}" w:left="${mgTw}" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>`;
+  const bodyXml = blocks.join(hr()) + para("", { after: 0 }) + sect;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${bodyXml}</w:body></w:document>`;
+}
+
+// --- minimal ZIP writer (stored / no compression) ---
+function crc32(bytes) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) {
+    crc ^= bytes[i];
+    for (let j = 0; j < 8; j++) crc = (crc >>> 1) ^ (0xEDB88320 & (-(crc & 1)));
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function zipStore(files) {
+  const enc = new TextEncoder();
+  const u16 = n => [n & 255, (n >> 8) & 255];
+  const u32 = n => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >> 24) & 255];
+  const parts = [], central = []; let offset = 0;
+  files.forEach(f => {
+    const name = enc.encode(f.name), data = enc.encode(f.str), crc = crc32(data);
+    const local = [].concat(u32(0x04034b50), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0));
+    const lh = Uint8Array.from(local);
+    parts.push(lh, name, data);
+    central.push(Uint8Array.from([].concat(u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset))));
+    central.push(name);
+    offset += lh.length + name.length + data.length;
+  });
+  const cdStart = offset;
+  central.forEach(p => { offset += p.length; });
+  const cdSize = offset - cdStart;
+  const eocd = Uint8Array.from([].concat(u32(0x06054b50), u16(0), u16(0), u16(files.length), u16(files.length), u32(cdSize), u32(cdStart), u16(0)));
+  const all = parts.concat(central, [eocd]);
+  const total = all.reduce((n, p) => n + p.length, 0);
+  const out = new Uint8Array(total); let pos = 0;
+  all.forEach(p => { out.set(p, pos); pos += p.length; });
+  return out;
+}
+const DOCX_CONTENT_TYPES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
+const DOCX_RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+
+function exportDocx() {
+  const d = collect(); if (!validTitle(d)) return;
+  const doc = buildDocumentXml(d, style, compact, lineSpacing, margin);
+  const bytes = zipStore([
+    { name: "[Content_Types].xml", str: DOCX_CONTENT_TYPES },
+    { name: "_rels/.rels", str: DOCX_RELS },
+    { name: "word/document.xml", str: doc }
+  ]);
+  downloadBlob(new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }), fileName(d, "docx"));
+  showToast("Downloaded " + fileName(d, "docx"));
+}
+
+/* =====================================================================
    STYLING TAB: controls, profiles, preview
    ===================================================================== */
 function buildStyleControls() {
@@ -667,20 +985,20 @@ document.getElementById("margin").addEventListener("input", (e) => {
 });
 
 /* =====================================================================
-   DOWNLOAD
+   DOWNLOAD HELPERS
    ===================================================================== */
-function downloadDoc() {
-  const d = collect();
-  if (!d.study) { alert("Please enter what you're studying (the title) before downloading."); switchTab("content"); document.getElementById("study").focus(); return; }
-  const html = buildDocHtml(d, style, compact, lineSpacing, margin);
-  const blob = new Blob(["﻿", html], { type: "application/msword" });
-  const name = (d.study || "study-guide").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  const week = (d.week || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  const fname = ([name, week].filter(Boolean).join("_") || "study-guide") + ".doc";
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = fname;
+function slug(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+function fileName(d, ext) { return ([slug(d.study), slug(d.week)].filter(Boolean).join("_") || "study-guide") + "." + ext; }
+function downloadBlob(blob, name) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  showToast("Downloaded " + fname);
+}
+function downloadDoc() {
+  const d = collect(); if (!validTitle(d)) return;
+  const html = buildDocHtml(d, style, compact, lineSpacing, margin);
+  downloadBlob(new Blob(["﻿", html], { type: "application/msword" }), fileName(d, "doc"));
+  showToast("Downloaded " + fileName(d, "doc"));
 }
 function showToast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(showToast._t); showToast._t = setTimeout(() => t.classList.remove("show"), 2600); }
 
@@ -702,10 +1020,36 @@ document.querySelectorAll("[data-add]").forEach(btn => {
     const key = btn.getAttribute("data-add");
     if (key === "segments") { document.getElementById("segments").appendChild(segmentEl(newSegment())); renumberSegments(); }
     else { const ph = key === "announcements" ? "One announcement…" : "One prayer point…"; document.getElementById(key).appendChild(stringItem(key, "", ph)); }
+    refreshMoveStates(); autosave();
   });
 });
-document.getElementById("btnDownload").addEventListener("click", downloadDoc);
-document.getElementById("btnClear").addEventListener("click", () => { if (confirm("Clear the form and start blank?")) fillForm(structuredClone(BLANK)); });
+
+// Autosave on any typing in the form
+document.getElementById("guideForm").addEventListener("input", autosave);
+
+// Export buttons
+document.getElementById("btnPrint").addEventListener("click", exportPDF);
+document.getElementById("btnDownloadDoc").addEventListener("click", downloadDoc);
+document.getElementById("btnDownloadDocx").addEventListener("click", exportDocx);
+
+// Content toolbar: open / save / example / clear
+document.getElementById("btnClear").addEventListener("click", () => { if (confirm("Clear the form and start blank?")) { fillForm(structuredClone(BLANK)); autosave(); } });
+document.getElementById("btnExample").addEventListener("click", () => { if (confirm("Load the example guide? This replaces what's on screen.")) { fillForm(structuredClone(EXAMPLE)); autosave(); } });
+document.getElementById("btnSaveGuide").addEventListener("click", () => {
+  const d = collect();
+  downloadBlob(new Blob([JSON.stringify(d, null, 2)], { type: "application/json" }), fileName(d, "studyguide.json"));
+  showToast("Saved " + fileName(d, "studyguide.json"));
+});
+document.getElementById("btnOpenGuide").addEventListener("click", () => document.getElementById("guideFile").click());
+document.getElementById("guideFile").addEventListener("change", (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try { fillForm(normalizeContent(JSON.parse(reader.result))); autosave(); showToast("Guide loaded"); }
+    catch (err) { alert("Sorry, that file couldn't be read as a saved guide."); }
+  };
+  reader.readAsText(file); e.target.value = "";
+});
 
 document.getElementById("profileSelect").addEventListener("change", (e) => applyProfile(e.target.value));
 document.getElementById("btnProfSave").addEventListener("click", () => {
@@ -782,8 +1126,8 @@ function normalizeProfile(p) {
    INIT
    ===================================================================== */
 (function init() {
-  // content
-  fillForm(structuredClone(EXAMPLE));
+  // content: restore auto-saved guide if present, else load the example
+  fillForm(loadContent() || structuredClone(EXAMPLE));
   // style + layout: restore last-used working values, else the active profile
   const w = loadWorking();
   if (w && w.style) {

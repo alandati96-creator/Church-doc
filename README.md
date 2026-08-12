@@ -14,6 +14,25 @@ install, and it works offline (the only feature that needs internet is scripture
 The page has two tabs — **Guide Content** and **Styling** — and three layout sliders
 along the bottom next to the export buttons.
 
+## Templates
+
+At the top of the **Guide Content** tab, the **Template** dropdown chooses the whole
+document layout:
+
+- **Study Guide** — the default: Title, Weekly Updates, scripture-segment Body, Closing
+  Prayer, and Growth Steps, with a horizontal line between each block.
+- **Luke's Packet** — a full community-group leader packet that mirrors the source
+  document: an all-uppercase title, Leader Details (main idea / goal), Introduction,
+  Form of Literature, Big Themes, an Icebreaker, then one block per passage section
+  (passage reference with write-in lines, Leader Setup, Key Notes, Transition, and
+  Questions as Q / A / Q-Simplified), and a Closing Reflection. It uses a plain Arial,
+  all-black, tightly-spaced style to match the original. Selecting it also applies that
+  styling automatically.
+
+Switching templates loads that template's example so you can see the structure. Each
+template's content is saved separately, and a saved `.json` remembers which template it
+belongs to.
+
 ## How to use it
 
 1. On the **Guide Content** tab, the form is pre-filled with an example so you can see

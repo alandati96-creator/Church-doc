@@ -109,6 +109,15 @@
   .content-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
   .content-toolbar .saved { margin-left: auto; font-size: 12px; color: #6b7280; font-weight: 600; }
   .content-toolbar .saved.flash { color: var(--primary); }
+  .tpl-select { font: inherit; font-size: 13px; font-weight: 600; padding: 8px 10px; border: 1px solid var(--primary-2); border-radius: 7px; background: #eef1fb; color: var(--primary); cursor: pointer; }
+
+  /* Packet form */
+  .pk-section { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--radius); padding: 14px 16px 16px; margin-top: 14px; background: #fdfaf4; }
+  .pk-section-head { display: flex; align-items: center; justify-content: space-between; }
+  .pk-section-head h4 { margin: 0; color: var(--accent); font-size: 14px; }
+  .qa-item { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-top: 8px; background: #fff; }
+  .qa-item .qa-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .qa-item .qa-head span { font-size: 11px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .4px; }
 
   /* Reorder controls */
   .move-group { display: inline-flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
@@ -151,14 +160,20 @@
       copy you can reopen later. Adjust the look in the <strong>Styling</strong> tab, then export at the bottom.
     </div>
     <div class="content-toolbar">
-      <button type="button" class="btn ghost sm" id="btnOpenGuide">📂 Open Guide</button>
-      <button type="button" class="btn ghost sm" id="btnSaveGuide">💾 Save Guide</button>
-      <button type="button" class="btn ghost sm" id="btnExample">Load Example</button>
+      <label for="templateSelect" style="font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px;">Template</label>
+      <select id="templateSelect" class="tpl-select">
+        <option value="study">Study Guide</option>
+        <option value="packet">Luke's Packet</option>
+      </select>
+      <button type="button" class="btn ghost sm" id="btnOpenGuide">📂 Open</button>
+      <button type="button" class="btn ghost sm" id="btnSaveGuide">💾 Save</button>
+      <button type="button" class="btn ghost sm" id="btnExample">Example</button>
       <button type="button" class="btn ghost sm" id="btnClear">Clear</button>
       <span class="saved" id="savedState">All changes saved</span>
       <input type="file" id="guideFile" accept="application/json,.json" style="display:none" />
     </div>
     <form id="guideForm">
+      <div id="form-study">
       <!-- 1. TITLE -->
       <fieldset>
         <legend>1 · Title</legend>
@@ -206,6 +221,8 @@
           <div><label class="field" for="nextOutward">Outward growth step</label><textarea id="nextOutward"></textarea></div>
         </div>
       </fieldset>
+      </div><!-- /form-study -->
+      <div id="form-packet" style="display:none"></div>
     </form>
   </section>
 
@@ -289,9 +306,10 @@ const BUILTIN_PROFILES = {
   "Classic":     Object.assign({}, DEFAULT_STYLE, DEFAULT_LAYOUT),
   "Ink Saver":   { titleFont:"Calibri", titleSize:18, titleColor:"#000000", titleBold:true, headingFont:"Calibri", headingSize:10, headingColor:"#000000", headingBold:true, bodyFont:"Calibri", bodySize:10, bodyColor:"#000000", accentColor:"#444444", compact:0.7, lineSpacing:1.15, margin:0.5 },
   "Large Print": { titleFont:"Georgia", titleSize:28, titleColor:"#3a4a7a", titleBold:true, headingFont:"Arial", headingSize:14, headingColor:"#3a4a7a", headingBold:true, bodyFont:"Georgia", bodySize:14, bodyColor:"#1f2430", accentColor:"#b07a2f", compact:1.25, lineSpacing:1.7, margin:1.0 },
-  // Matches the "Community Group Packet" .docx: Arial, all-black, bold uppercase
-  // headers, tight margins and 1.15 line spacing — a dense, paper-efficient leader packet.
-  "Community Group Packet": { titleFont:"Arial", titleSize:20, titleColor:"#000000", titleBold:true, headingFont:"Arial", headingSize:12, headingColor:"#000000", headingBold:true, bodyFont:"Arial", bodySize:11, bodyColor:"#000000", accentColor:"#000000", compact:0.8, lineSpacing:1.15, margin:0.6 }
+  // Styling for Luke's Packet: Arial, all-black, bold uppercase headers, tight
+  // margins and 1.15 line spacing — matching the source .docx. Auto-applied when
+  // the "Luke's Packet" template is selected.
+  "Luke's Packet": { titleFont:"Arial", titleSize:20, titleColor:"#000000", titleBold:true, headingFont:"Arial", headingSize:12, headingColor:"#000000", headingBold:true, bodyFont:"Arial", bodySize:11, bodyColor:"#000000", accentColor:"#000000", compact:0.8, lineSpacing:1.15, margin:0.6 }
 };
 
 /* =====================================================================
@@ -377,12 +395,138 @@ const BLANK = {
 function newSegment() { return { passage: "", scriptureText: "", summary: "", leaderNotes: "", transition: "", questions: [""], relatedVerses: [""] }; }
 
 /* =====================================================================
+   LUKE'S PACKET — second template. Its example is the actual
+   Week 1 / 1 Peter 1 community-group packet, reproduced field-for-field.
+   ===================================================================== */
+function newQA() { return { q: "", a: "", simplified: "" }; }
+function newPacketSection() { return { ref: "", title: "", passageText: "", leaderSetup: "", keyNotes: [""], transition: "", questions: [newQA()], summary: "" }; }
+
+const PACKET_EXAMPLE = {
+  week: "1",
+  study: "1 Peter 1",
+  book: "1 Peter",
+  passageVersion: "ESV",
+  mainIdea: "Because of Jesus, believers have a living hope that shapes how we handle trials, holiness, and love.",
+  goalTonight: "Understand the world Peter is writing into, then see how our identity and hope in Christ shape the way we live.",
+  introduction: [
+    "Before we get into chapter 1, it helps to know who is writing and why this letter matters. Peter was one of the twelve apostles and one of the people closest to Jesus during His earthly ministry. He saw Jesus teach, heal, suffer, die, and rise again. Peter also knew what it was like to fail badly. He denied knowing Jesus when he was afraid, but Jesus restored him and later entrusted him with caring for His people. That background matters because Peter is now writing to Christians who are learning how to remain faithful when following Jesus becomes difficult.",
+    "Peter addresses believers scattered throughout Pontus, Galatia, Cappadocia, Asia, and Bithynia, areas in Asia Minor. He calls them exiles. Some may have literally been living away from places they once called home, but Peter also uses the language to describe something deeper about Christian identity. They live in the world, but their deepest belonging is now with God. Because of that, their values, loyalties, and way of life will not always match the culture around them."
+  ],
+  formOfLiterature: [
+    "1 Peter is an epistle, which simply means it is a letter. More specifically, it is usually grouped with the New Testament General Epistles because Peter writes to believers spread across several regions rather than to one local church. Like other ancient letters, it begins by naming the sender and the people receiving it, then moves into teaching, encouragement, commands, and a closing greeting. Much of the letter is exhortation, meaning Peter takes truths about what God has done and then shows Christians how those truths should shape the way they live. Because this is a real letter written to real believers facing real pressure, we should first ask what Peter was saying to them in their situation, and then ask how that same truth applies to us today.",
+    "The Christians Peter writes to were dealing with pressure, rejection, misunderstanding, and suffering because of their faith. Peter does not respond by promising that everything will become easier. Instead, he keeps bringing them back to what cannot change. They have been chosen by God. They have been born again. They have a living hope because Jesus is alive. They have an inheritance that cannot fade. Even when their place in the world feels uncertain, their place with God is secure.",
+    "That is one of the biggest ideas in the whole letter. Peter wants believers to know who they are before he tells them how to live. Their obedience is not an attempt to earn a place with God. It grows out of the fact that God has already made them His people. Because they belong to Him, they are called to live holy lives, love one another, endure suffering faithfully, and represent Christ well even when the world around them does not understand them.",
+    "As we move through 1 Peter, keep watching for the connection between identity, hope, suffering, and obedience. Peter will repeatedly remind these believers that their present circumstances are temporary, but what God has done for them in Christ is permanent. Chapter 1 begins that message by answering a basic question: How do you live faithfully when you feel out of place, life is uncertain, and following Jesus costs you something? Peter begins by reminding us that our hope is not in having an easy life. Our hope is in a living Savior."
+  ],
+  bigThemes: [
+    "Identity. Who we are is rooted in belonging to God.",
+    "Living hope. Christian hope is grounded in the resurrection of Jesus.",
+    "Suffering. Hardship does not mean God has abandoned His people.",
+    "Holiness. Grace changes the way believers live.",
+    "Witness. Christians are called to represent Jesus faithfully in the world.",
+    "Love. A changed relationship with God should change how we treat one another."
+  ],
+  icebreakers: [
+    "Q: When have you felt out of place somewhere, and what made you feel that way?",
+    "Q alternate: What usually makes someone feel like they do not belong?"
+  ],
+  sections: [
+    { ref: "1 Peter 1:1 to 2", title: "Chosen Exiles", passageText: "",
+      leaderSetup: "Peter opens by reminding these believers that even though they are scattered and may feel out of place, they are still chosen by God and belong to Him.",
+      keyNotes: ["Being an exile does not mean being forgotten by God.", "Their identity starts with what God says about them, not what the culture says about them.", "Verse 2 shows the Father, Spirit, and Jesus all involved in God’s saving work."],
+      transition: "“So how should belonging to God change the way we handle not fitting in?”",
+      questions: [
+        { q: "Why do you think Peter reminds these believers that they are chosen by God even though they are living as exiles?", a: "They may feel out of place or rejected, but that does not change who they are. They still belong to God.", simplified: "Why would knowing you belong to God help when you feel like you do not fit in?" },
+        { q: "What do we learn about God’s role in our salvation from verse 2?", a: "The Father, Spirit, and Jesus are all involved. Salvation begins with God and changes the way we live.", simplified: "What is God doing for believers in this verse?" },
+        { q: "Where do Christians feel the most pressure today to fit in instead of following Jesus?", a: "This can happen anywhere acceptance feels more important than faithfulness. The goal is to notice where pressure to fit in can lead us away from obedience.", simplified: "Where are we most tempted to compromise just so we fit in?" }
+      ],
+      summary: "We may feel out of place in the world, but our identity is secure because we belong to God." },
+    { ref: "1 Peter 1:3 to 5", title: "A Living Hope", passageText: "",
+      leaderSetup: "After reminding them who they are, Peter reminds them what God has given them. Their hope is alive because Jesus is alive, and their inheritance cannot be taken away.",
+      keyNotes: ["Christian hope is based on the resurrection of Jesus.", "Our inheritance is secure even when our circumstances are not.", "God is not only keeping the promise. He is guarding His people through faith."],
+      transition: "“What makes Christian hope different from simply hoping life works out?”",
+      questions: [
+        { q: "What makes the hope Peter talks about different from just hoping something good happens?", a: "Christian hope is based on Jesus rising from the dead, not on whether our circumstances turn out the way we want.", simplified: "Why can Christians have hope even when life is hard?" },
+        { q: "Why is it important that our inheritance cannot fade or be taken away?", a: "Almost everything in this life can change. What God promises His people is secure.", simplified: "Why does it matter that what God promises lasts forever?" },
+        { q: "What are some temporary things we sometimes depend on for security?", a: "Money, relationships, plans, success, comfort, approval, and control can all become things we depend on more than God.", simplified: "What things can make us feel secure even though they can change?" }
+      ],
+      summary: "Our hope is secure because it rests on the risen Jesus and a future God Himself is keeping." },
+    { ref: "1 Peter 1:6 to 9", title: "Faith Through Trials", passageText: "",
+      leaderSetup: "Peter does not pretend trials are easy. He says believers can be genuinely grieved and still have joy because their faith and future are rooted in Christ.",
+      keyNotes: ["Christian joy does not mean pretending pain is not real.", "Trials can reveal what we really trust.", "Faith keeps trusting Christ even when we cannot see what He is doing."],
+      transition: "“What can difficult seasons reveal about our faith?”",
+      questions: [
+        { q: "How can someone be grieving and still have joy at the same time?", a: "Christian joy does not mean pretending something does not hurt. We can experience real pain while still trusting God and having hope in Christ.", simplified: "Can you be sad and still trust God and have joy?" },
+        { q: "What can difficult seasons reveal about our faith?", a: "Trials can reveal what we really trust and where our faith needs to grow.", simplified: "What do hard times show us about what we really believe?" },
+        { q: "What helps us keep trusting God when we cannot see what He is doing?", a: "We remember His character, His promises, what Christ has done, and we keep turning to prayer, Scripture, and other believers.", simplified: "How do you keep trusting God when you do not understand what is happening?" }
+      ],
+      summary: "Trials can hurt deeply, but they do not cancel our hope. God can use them to strengthen genuine faith." },
+    { ref: "1 Peter 1:10 to 12", title: "The Salvation They Longed to See", passageText: "",
+      leaderSetup: "Peter pauses to show how valuable the gospel really is. The salvation these Christians have received is something the prophets searched for and longed to understand.",
+      keyNotes: ["The gospel is the fulfillment of promises God had been revealing for generations.", "Familiarity can make us forget how amazing salvation really is.", "Christ’s suffering followed by glory matters for believers who are also facing hardship."],
+      transition: "“Why should we never start treating the gospel like ordinary news?”",
+      questions: [
+        { q: "Why do you think Peter tells them that the prophets were searching and waiting for the salvation we now have in Jesus?", a: "He wants them to see how important and valuable the gospel is. What we sometimes take for granted was something God’s people waited a long time to see fulfilled.", simplified: "Why should we not take the gospel for granted?" },
+        { q: "Why do you think something as amazing as the gospel can start to feel normal to us?", a: "We hear it so often that we can become familiar with it without stopping to think about how incredible it actually is.", simplified: "Why do we sometimes stop being amazed by what Jesus did for us?" }
+      ],
+      summary: "The gospel should never become ordinary to us. What God has given us in Christ is something generations longed to see." },
+    { ref: "1 Peter 1:13 to 16", title: "Be Holy", passageText: "",
+      leaderSetup: "This is where Peter begins giving direct commands. Notice the order. He first reminds them of grace and hope, then he calls them to live differently because they belong to God.",
+      keyNotes: ["Grace comes before obedience.", "Holiness means being set apart for God in all of life.", "Following Jesus means old desires and patterns no longer get to control us."],
+      transition: "“If we belong to God, what should actually look different about our lives?”",
+      questions: [
+        { q: "Why do you think Peter talks about God’s grace and salvation before telling them to be holy?", a: "We do not live holy lives to earn salvation. We pursue holiness because God has already shown us grace and made us His people.", simplified: "Why does grace come before obedience?" },
+        { q: "What does being holy actually look like in everyday life?", a: "It affects how we speak, treat people, work, think, make decisions, and what we choose when nobody else is around.", simplified: "What would looking different because you follow Jesus actually look like?" },
+        { q: "What areas of life are easiest for us to leave God out of?", a: "We can separate faith from relationships, entertainment, money, work, private habits, our thoughts, or our plans. Peter calls believers to holiness in all their conduct.", simplified: "What part of life are we most tempted to keep separate from God?" }
+      ],
+      summary: "Holiness is not how we earn God’s love. It is how people who already belong to God learn to live." },
+    { ref: "1 Peter 1:17 to 21", title: "Redeemed at a Cost", passageText: "",
+      leaderSetup: "Peter reminds believers that they were not rescued with something temporary like money. They were redeemed through Christ. That should create both gratitude and a serious respect for God.",
+      keyNotes: ["Calling God Father gives us security, but His holiness should still produce reverence.", "Christ’s sacrifice shows the greatness of God’s love and the seriousness of sin.", "Jesus redeemed us from an empty way of life so we do not have to keep living in it."],
+      transition: "“What should the price of our redemption change about the way we live?”",
+      questions: [
+        { q: "What does the price Jesus paid to redeem us show us about our value to God?", a: "God’s love for us is incredibly great. We were not redeemed with something temporary like money, but through Christ.", simplified: "What does Jesus giving His life for us show about how much God loves us?" },
+        { q: "What does it mean to fear God while also knowing Him as our Father?", a: "We can be secure in His love while still respecting His holiness, authority, and greatness.", simplified: "How can we love God and still have a deep respect for Him?" },
+        { q: "Why do you think we sometimes go back to old ways of living even after God has shown us they are empty?", a: "Old habits can feel familiar and sin can promise quick satisfaction even when we know it ultimately leaves us empty.", simplified: "Why is it so easy to fall back into old habits?" }
+      ],
+      summary: "We were redeemed at a great cost, so grace should lead us to gratitude, reverence, and a changed life." },
+    { ref: "1 Peter 1:22 to 25", title: "Love and the Word", passageText: "",
+      leaderSetup: "Peter closes the chapter by showing that a changed life includes the way we love other people. He then reminds them that human life fades, but God’s Word remains forever.",
+      keyNotes: ["Truth should change how we treat people, not only what we know.", "Earnest love goes deeper than simply being polite when it is easy.", "People and circumstances change, but God’s Word remains."],
+      transition: "“If God’s truth is really changing us, where should people be able to see it?”",
+      questions: [
+        { q: "Why does Peter connect following the truth with loving other people?", a: "God’s truth should change more than what we know. It should change how we treat others.", simplified: "Why should following Jesus change how we treat people?" },
+        { q: "What usually makes it difficult for us to genuinely love other people?", a: "Pride, hurt, selfishness, resentment, impatience, and unforgiveness can all get in the way.", simplified: "What usually gets in the way of loving people well?" },
+        { q: "Why is it important that Peter ends the chapter by reminding us that God’s Word lasts forever?", a: "Everything around us changes and eventually fades, but God and His truth remain dependable.", simplified: "Why is God’s Word something we can build our lives on?" }
+      ],
+      summary: "God’s truth gives us new life, changes the way we love, and gives us something permanent to build our lives on." }
+  ],
+  closing: { q: "What part of 1 Peter 1 do you think you need to remember most this week?", a: "Let the group answer personally. The goal is to identify one truth from the chapter they want to carry into the week.", simplified: "What part of tonight stood out to you the most?" }
+};
+
+const PACKET_BLANK = {
+  week: "", study: "", book: "", passageVersion: "ESV",
+  mainIdea: "", goalTonight: "",
+  introduction: [""], formOfLiterature: [""], bigThemes: [""], icebreakers: [""],
+  sections: [newPacketSection()],
+  closing: { q: "", a: "", simplified: "" }
+};
+
+/* =====================================================================
    STATE + PERSISTENCE
    ===================================================================== */
 const KEY_WORKING = "churchStudyGuide.working.v3";     // last-used style + layout
 const KEY_PROFILES = "churchStudyGuide.profiles.v3";   // saved named profiles
 const KEY_CONTENT = "churchStudyGuide.content.v1";     // auto-saved guide content
 const KEY_TRANS = "churchStudyGuide.translation.v1";   // last-used Bible translation
+const KEY_TEMPLATE = "churchStudyGuide.template.v1";   // selected template
+
+// Which document template is active: "study" or "packet"
+let currentTemplate = "study";
+try { const t = localStorage.getItem(KEY_TEMPLATE); if (t === "study" || t === "packet") currentTemplate = t; } catch (e) {}
+function saveTemplate() { try { localStorage.setItem(KEY_TEMPLATE, currentTemplate); } catch (e) {} }
+function templateExample() { return currentTemplate === "packet" ? PACKET_EXAMPLE : EXAMPLE; }
+function templateBlank() { return currentTemplate === "packet" ? PACKET_BLANK : BLANK; }
 
 const TRANSLATIONS = ["NIV", "NLT", "ESV", "NASB", "KJV"];
 let lastTranslation = "KJV";
@@ -398,7 +542,9 @@ function loadProfiles() {
   try { const raw = localStorage.getItem(KEY_PROFILES); if (raw) p = JSON.parse(raw); } catch (e) {}
   if (!p || !p.list) p = { list: structuredClone(BUILTIN_PROFILES), active: "Classic" };
   else {
-    // Add any built-in profiles this browser doesn't have yet, keeping the user's own.
+    // Retire the earlier name for the packet styling, keeping the user's own profiles.
+    if (p.list["Community Group Packet"]) { delete p.list["Community Group Packet"]; if (p.active === "Community Group Packet") p.active = "Classic"; }
+    // Add any built-in profiles this browser doesn't have yet.
     Object.keys(BUILTIN_PROFILES).forEach(name => { if (!p.list[name]) p.list[name] = structuredClone(BUILTIN_PROFILES[name]); });
   }
   saveProfiles(p);
@@ -425,8 +571,10 @@ function flashSaved() {
   el.textContent = "All changes saved"; el.classList.add("flash");
   clearTimeout(flashSaved._t); flashSaved._t = setTimeout(() => el.classList.remove("flash"), 800);
 }
-function loadContent() { try { const raw = localStorage.getItem(KEY_CONTENT); return raw ? normalizeContent(JSON.parse(raw)) : null; } catch (e) { return null; } }
-function normalizeContent(d) {
+function loadContent() { try { const raw = localStorage.getItem(KEY_CONTENT); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
+function templateOf(d) { return d && d.template === "packet" ? "packet" : "study"; }
+function normalizeContent(d) { return templateOf(d) === "packet" ? normalizePacket(d) : normalizeStudy(d); }
+function normalizeStudy(d) {
   const out = Object.assign(structuredClone(BLANK), d || {});
   out.announcements = Array.isArray(out.announcements) && out.announcements.length ? out.announcements : [""];
   out.prayerPoints = Array.isArray(out.prayerPoints) && out.prayerPoints.length ? out.prayerPoints : [""];
@@ -437,17 +585,36 @@ function normalizeContent(d) {
   });
   return out;
 }
+function normalizePacket(d) {
+  const out = Object.assign(structuredClone(PACKET_BLANK), d || {});
+  ["introduction","formOfLiterature","bigThemes","icebreakers"].forEach(k => { out[k] = Array.isArray(out[k]) && out[k].length ? out[k] : [""]; });
+  out.sections = Array.isArray(out.sections) && out.sections.length ? out.sections.map(s => Object.assign(newPacketSection(), s)) : [newPacketSection()];
+  out.sections.forEach(s => {
+    s.keyNotes = Array.isArray(s.keyNotes) && s.keyNotes.length ? s.keyNotes : [""];
+    s.questions = Array.isArray(s.questions) && s.questions.length ? s.questions.map(q => Object.assign(newQA(), q)) : [newQA()];
+  });
+  out.closing = Object.assign({ q: "", a: "", simplified: "" }, out.closing || {});
+  return out;
+}
 
 /* =====================================================================
    CONTENT FORM
    ===================================================================== */
+function showTemplateForm(which) {
+  document.getElementById("form-study").style.display = which === "study" ? "" : "none";
+  document.getElementById("form-packet").style.display = which === "packet" ? "" : "none";
+}
 function fillForm(d) {
+  if (currentTemplate === "packet") { showTemplateForm("packet"); fillPacketForm(d); }
+  else { showTemplateForm("study"); fillStudyForm(d); }
+  refreshMoveStates();
+}
+function fillStudyForm(d) {
   ["study","week","description","iceBreaker","focusInward","focusOutward","nextInward","nextOutward"]
     .forEach(k => { document.getElementById(k).value = d[k] || ""; });
   renderStringList("announcements", d.announcements, "One announcement…");
   renderStringList("prayerPoints", d.prayerPoints, "One prayer point…");
   renderSegments(d.segments);
-  refreshMoveStates();
 }
 
 /* Reorder helpers */
@@ -481,6 +648,10 @@ function refreshMoveStates() {
   setEnds(document.getElementById("announcements"), ".list-item");
   setEnds(document.getElementById("prayerPoints"), ".list-item");
   document.querySelectorAll("[data-nested]").forEach(n => setEnds(n, ".list-item"));
+  // Packet containers
+  setEnds(document.getElementById("pk-sections"), ".pk-section");
+  document.querySelectorAll("[data-pklist]").forEach(n => setEnds(n, ".list-item"));
+  document.querySelectorAll("[data-qalist]").forEach(n => setEnds(n, ".qa-item"));
 }
 
 function renderStringList(containerId, arr, placeholder) {
@@ -566,7 +737,8 @@ function nestedItem(key, val, placeholder, short) {
   rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.querySelector('[data-item]')) box.insertBefore(nestedItem(key, "", placeholder, short), box.querySelector('.add-btn')); refreshMoveStates(); autosave(); });
   item.append(moveGroup(item, ".list-item"), input, rm); return item;
 }
-function collect() {
+function collect() { return currentTemplate === "packet" ? collectPacket() : collectStudy(); }
+function collectStudy() {
   const g = id => document.getElementById(id).value.trim();
   const listVals = containerId => Array.from(document.querySelectorAll(`#${containerId} [data-list="${containerId}"]`)).map(el => el.value.trim()).filter(Boolean);
   const segments = Array.from(document.querySelectorAll('[data-segment]')).map(seg => {
@@ -575,10 +747,197 @@ function collect() {
     return { passage: val("passage"), scriptureText: val("scriptureText"), summary: val("summary"), leaderNotes: val("leaderNotes"), transition: val("transition"), questions: nested("questions"), relatedVerses: nested("relatedVerses") };
   }).filter(s => s.passage || s.scriptureText || s.summary || s.leaderNotes || s.transition || s.questions.length || s.relatedVerses.length);
   return {
+    template: "study",
     study: g("study"), week: g("week"), description: g("description"),
     announcements: listVals("announcements"), iceBreaker: g("iceBreaker"),
     focusInward: g("focusInward"), focusOutward: g("focusOutward"),
     segments, prayerPoints: listVals("prayerPoints"), nextInward: g("nextInward"), nextOutward: g("nextOutward")
+  };
+}
+
+/* ---------- LUKE'S PACKET: form + collect ---------- */
+function fillPacketForm(d) {
+  const root = document.getElementById("form-packet"); root.innerHTML = "";
+
+  const fs1 = pkFieldset("1 · Packet Details");
+  fs1.append(
+    pkRow2(pkText("pk-week", "Week", d.week, "e.g. 1"), pkText("pk-study", "What we're studying (title)", d.study, "e.g. 1 Peter 1")),
+    pkRow2(pkText("pk-book", "Book (for the intro heading)", d.book, "e.g. 1 Peter"), pkText("pk-version", "Passage version label", d.passageVersion || "ESV", "e.g. ESV")),
+    pkArea("pk-mainIdea", "Main Idea", d.mainIdea),
+    pkArea("pk-goalTonight", "Goal Tonight", d.goalTonight)
+  );
+  root.appendChild(fs1);
+
+  const fs2 = pkFieldset("2 · Introduction");
+  fs2.append(pkListBlock("introduction", d.introduction, "Introduction paragraph…", "+ Add paragraph"));
+  root.appendChild(fs2);
+
+  const fs3 = pkFieldset("3 · Form of Literature");
+  fs3.append(pkListBlock("formOfLiterature", d.formOfLiterature, "Paragraph…", "+ Add paragraph"));
+  root.appendChild(fs3);
+
+  const fs4 = pkFieldset("4 · Big Themes to Watch For");
+  fs4.append(pkListBlock("bigThemes", d.bigThemes, "One theme…", "+ Add theme"));
+  root.appendChild(fs4);
+
+  const fs5 = pkFieldset("5 · Icebreaker");
+  fs5.append(pkListBlock("icebreakers", d.icebreakers, "One icebreaker line…", "+ Add line"));
+  root.appendChild(fs5);
+
+  const fs6 = pkFieldset("6 · Sections");
+  const secBox = document.createElement("div"); secBox.id = "pk-sections";
+  (d.sections && d.sections.length ? d.sections : [newPacketSection()]).forEach(sec => secBox.appendChild(pkSectionEl(sec)));
+  const addSec = document.createElement("button"); addSec.type = "button"; addSec.className = "add-btn"; addSec.textContent = "+ Add section";
+  addSec.addEventListener("click", () => { secBox.appendChild(pkSectionEl(newPacketSection())); pkRenumberSections(); refreshMoveStates(); autosave(); });
+  fs6.append(secBox, addSec);
+  root.appendChild(fs6);
+
+  const fs7 = pkFieldset("7 · Closing Reflection");
+  const c = d.closing || { q: "", a: "", simplified: "" };
+  fs7.append(pkArea("pk-cq", "Q", c.q), pkArea("pk-ca", "A", c.a), pkArea("pk-cs", "Q Simplified", c.simplified));
+  root.appendChild(fs7);
+
+  pkRenumberSections();
+}
+
+function pkFieldset(legendText) {
+  const fs = document.createElement("fieldset");
+  const lg = document.createElement("legend"); lg.textContent = legendText; fs.appendChild(lg); return fs;
+}
+function pkText(id, labelText, val, ph) {
+  const div = document.createElement("div");
+  const lab = document.createElement("label"); lab.className = "field"; lab.setAttribute("for", id); lab.textContent = labelText;
+  const inp = document.createElement("input"); inp.type = "text"; inp.id = id; inp.value = val || ""; if (ph) inp.placeholder = ph;
+  div.append(lab, inp); return div;
+}
+function pkArea(id, labelText, val, ph) {
+  const div = document.createElement("div");
+  const lab = document.createElement("label"); lab.className = "field"; lab.setAttribute("for", id); lab.textContent = labelText;
+  const ta = document.createElement("textarea"); ta.id = id; ta.value = val || ""; if (ph) ta.placeholder = ph;
+  div.append(lab, ta); return div;
+}
+function pkRow2(a, b) { const r = document.createElement("div"); r.className = "row2"; r.append(a, b); return r; }
+
+// A reorderable list of single textareas, stored under a data-pklist container
+function pkListBlock(key, arr, placeholder, addLabel) {
+  const wrap = document.createElement("div");
+  const box = document.createElement("div"); box.setAttribute("data-pklist", key);
+  (arr && arr.length ? arr : [""]).forEach(v => box.appendChild(pkListItem(key, v, placeholder)));
+  const add = document.createElement("button"); add.type = "button"; add.className = "add-btn"; add.textContent = addLabel;
+  add.addEventListener("click", () => { box.appendChild(pkListItem(key, "", placeholder)); refreshMoveStates(); autosave(); });
+  wrap.append(box, add); return wrap;
+}
+function pkListItem(key, val, placeholder) {
+  const item = document.createElement("div"); item.className = "list-item";
+  const ta = document.createElement("textarea"); ta.rows = 2; ta.value = val || ""; ta.placeholder = placeholder; ta.setAttribute("data-pkitem", key);
+  const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove";
+  rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.children.length) box.appendChild(pkListItem(key, "", placeholder)); refreshMoveStates(); autosave(); });
+  item.append(moveGroup(item, ".list-item"), ta, rm); return item;
+}
+
+function pkSectionEl(sec) {
+  const wrap = document.createElement("div"); wrap.className = "pk-section"; wrap.setAttribute("data-pksection", "");
+  const head = document.createElement("div"); head.className = "pk-section-head";
+  const h = document.createElement("h4"); h.textContent = "Section";
+  const right = document.createElement("div"); right.style.cssText = "display:flex;align-items:center;gap:8px;";
+  const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove section";
+  rm.addEventListener("click", () => { const box = wrap.parentElement; wrap.remove(); if (!box.children.length) box.appendChild(pkSectionEl(newPacketSection())); pkRenumberSections(); refreshMoveStates(); autosave(); });
+  right.append(moveGroup(wrap, ".pk-section", pkRenumberSections), rm);
+  head.append(h, right); wrap.appendChild(head);
+
+  const refDiv = pkText2("ref", "Passage reference", sec.ref, "e.g. 1 Peter 1:1 to 2");
+  const refInput = refDiv.querySelector("input");
+  const passDiv = pkArea2("passageText", "Passage text (leave blank for write-in lines)", sec.passageText, "Paste the passage, or use “Get text”.");
+  const passBox = passDiv.querySelector("textarea");
+  wrap.append(
+    pkRow2(refDiv, pkText2("title", "Section title", sec.title, "e.g. Chosen Exiles")),
+    fetchRow(refInput, passBox),
+    passDiv,
+    pkArea2("leaderSetup", "Leader setup (say this)", sec.leaderSetup),
+    pkSub("Key notes (leader only)"),
+    pkNested("keyNotes", sec.keyNotes, "One key note…", "+ Add key note"),
+    pkArea2("transition", "Transition into questions", sec.transition),
+    pkSub("Questions (Q / A / Q Simplified)"),
+    pkQAList(sec.questions),
+    pkArea2("summary", "Section summary", sec.summary)
+  );
+  return wrap;
+}
+function pkRenumberSections() { document.querySelectorAll('[data-pksection] .pk-section-head h4').forEach((h, i) => h.textContent = "Section " + (i + 1)); }
+function pkSub(text) { const d = document.createElement("div"); d.className = "sub-legend"; d.textContent = text; return d; }
+// Section-scoped field builders (use data-key like the study segments)
+function pkText2(key, labelText, val, ph) {
+  const div = document.createElement("div");
+  const lab = document.createElement("label"); lab.className = "field"; lab.textContent = labelText;
+  const inp = document.createElement("input"); inp.type = "text"; inp.value = val || ""; if (ph) inp.placeholder = ph; inp.setAttribute("data-key", key);
+  div.append(lab, inp); return div;
+}
+function pkArea2(key, labelText, val, ph) {
+  const div = document.createElement("div");
+  const lab = document.createElement("label"); lab.className = "field"; lab.textContent = labelText;
+  const ta = document.createElement("textarea"); ta.value = val || ""; if (ph) ta.placeholder = ph; ta.setAttribute("data-key", key);
+  div.append(lab, ta); return div;
+}
+// Section-scoped reorderable simple list (key notes)
+function pkNested(key, arr, placeholder, addLabel) {
+  const div = document.createElement("div"); div.setAttribute("data-nested", key);
+  (arr && arr.length ? arr : [""]).forEach(v => div.appendChild(pkNestedItem(key, v, placeholder)));
+  const add = document.createElement("button"); add.type = "button"; add.className = "add-btn"; add.textContent = addLabel;
+  add.addEventListener("click", () => { div.insertBefore(pkNestedItem(key, "", placeholder), add); refreshMoveStates(); autosave(); });
+  div.appendChild(add); return div;
+}
+function pkNestedItem(key, val, placeholder) {
+  const item = document.createElement("div"); item.className = "list-item";
+  const ta = document.createElement("textarea"); ta.rows = 2; ta.value = val || ""; ta.placeholder = placeholder; ta.setAttribute("data-item", key);
+  const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove";
+  rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.querySelector('[data-item]')) box.insertBefore(pkNestedItem(key, "", placeholder), box.querySelector('.add-btn')); refreshMoveStates(); autosave(); });
+  item.append(moveGroup(item, ".list-item"), ta, rm); return item;
+}
+// Q / A / Q-Simplified triplets
+function pkQAList(arr) {
+  const div = document.createElement("div"); div.setAttribute("data-qalist", "");
+  (arr && arr.length ? arr : [newQA()]).forEach(qa => div.appendChild(pkQAItem(qa)));
+  const add = document.createElement("button"); add.type = "button"; add.className = "add-btn"; add.textContent = "+ Add question";
+  add.addEventListener("click", () => { div.insertBefore(pkQAItem(newQA()), add); refreshMoveStates(); autosave(); });
+  div.appendChild(add); return div;
+}
+function pkQAItem(qa) {
+  const item = document.createElement("div"); item.className = "qa-item"; item.setAttribute("data-qaitem", "");
+  const head = document.createElement("div"); head.className = "qa-head";
+  const lbl = document.createElement("span"); lbl.textContent = "Question";
+  const right = document.createElement("div"); right.style.cssText = "display:flex;align-items:center;gap:6px;";
+  const rm = document.createElement("button"); rm.type = "button"; rm.className = "icon-btn"; rm.textContent = "×"; rm.title = "Remove question";
+  rm.addEventListener("click", () => { const box = item.parentElement; item.remove(); if (!box.querySelector('[data-qaitem]')) box.insertBefore(pkQAItem(newQA()), box.querySelector('.add-btn')); refreshMoveStates(); autosave(); });
+  right.append(moveGroup(item, ".qa-item"), rm);
+  head.append(lbl, right); item.appendChild(head);
+  item.append(
+    pkArea2("q", "Q", qa.q),
+    pkArea2("a", "A (answer)", qa.a),
+    pkArea2("simplified", "Q Simplified", qa.simplified)
+  );
+  return item;
+}
+
+function collectPacket() {
+  const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+  const pkList = key => Array.from(document.querySelectorAll(`[data-pklist="${key}"] [data-pkitem="${key}"]`)).map(el => el.value.trim()).filter(Boolean);
+  const sections = Array.from(document.querySelectorAll('[data-pksection]')).map(sec => {
+    const val = key => { const el = sec.querySelector(`[data-key="${key}"]`); return el ? el.value.trim() : ""; };
+    const keyNotes = Array.from(sec.querySelectorAll(`[data-nested="keyNotes"] [data-item="keyNotes"]`)).map(el => el.value.trim()).filter(Boolean);
+    const questions = Array.from(sec.querySelectorAll('[data-qaitem]')).map(qa => {
+      const qv = key => { const el = qa.querySelector(`[data-key="${key}"]`); return el ? el.value.trim() : ""; };
+      return { q: qv("q"), a: qv("a"), simplified: qv("simplified") };
+    }).filter(x => x.q || x.a || x.simplified);
+    return { ref: val("ref"), title: val("title"), passageText: val("passageText"), leaderSetup: val("leaderSetup"), keyNotes, transition: val("transition"), questions, summary: val("summary") };
+  }).filter(s => s.ref || s.title || s.passageText || s.leaderSetup || s.keyNotes.length || s.transition || s.questions.length || s.summary);
+  return {
+    template: "packet",
+    week: g("pk-week"), study: g("pk-study"), book: g("pk-book"), passageVersion: g("pk-version") || "ESV",
+    mainIdea: g("pk-mainIdea"), goalTonight: g("pk-goalTonight"),
+    introduction: pkList("introduction"), formOfLiterature: pkList("formOfLiterature"),
+    bigThemes: pkList("bigThemes"), icebreakers: pkList("icebreakers"),
+    sections,
+    closing: { q: g("pk-cq"), a: g("pk-ca"), simplified: g("pk-cs") }
   };
 }
 
@@ -587,8 +946,77 @@ function collect() {
    ===================================================================== */
 function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>"); }
 function has(v) { return v != null && String(v).trim() !== ""; }
+function cleanList(arr) { return (arr || []).map(x => (x == null ? "" : String(x)).trim()).filter(Boolean); }
 
-function buildContent(d, S, K) {
+function buildContent(d, S, K) { return currentTemplate === "packet" ? buildPacketContent(d, S, K) : buildStudyContent(d, S, K); }
+
+/* ---------- LUKE'S PACKET: HTML render (preview / .doc / PDF) ----------
+   Plain, Arial-style leader packet: bold uppercase headers, no rules or
+   boxes, blocks separated only by spacing — mirroring the source .docx. */
+function buildPacketContent(d, S, K) {
+  const sp = n => Math.max(0, +(n * K).toFixed(1));
+  const tw = b => b ? "bold" : "normal";
+  const H = ff(S.headingFont), B = ff(S.bodyFont);
+  const bs = S.bodySize;
+  const hdr = (t, size, mt) => `<p style="font-family:${H};font-size:${size}pt;font-weight:bold;color:${S.headingColor};margin:${sp(mt)}pt 0 ${sp(3)}pt;">${esc(t).toUpperCase()}</p>`;
+  const body = t => `<p style="font-family:${B};font-size:${bs}pt;color:${S.bodyColor};margin:${sp(4)}pt 0 0;">${esc(t)}</p>`;
+  const boldLine = t => `<p style="font-family:${B};font-size:${bs}pt;font-weight:bold;color:${S.bodyColor};margin:${sp(2)}pt 0 0;">${esc(t)}</p>`;
+  const bullet = t => `<p style="font-family:${B};font-size:${bs}pt;font-weight:bold;color:${S.bodyColor};margin:${sp(2)}pt 0 0 ${sp(6)}pt;">• ${esc(t)}</p>`;
+  const writeLine = () => `<p style="border-bottom:1px solid #999;margin:${sp(6)}pt 0;height:${Math.max(10, Math.round(bs * 1.1))}pt;">&nbsp;</p>`;
+  const V = (d.passageVersion || "ESV");
+  const cl = cleanList;
+
+  let html = "";
+  // Title
+  html += `<p style="font-family:${H};font-size:${S.titleSize}pt;font-weight:bold;color:${S.titleColor};margin:0 0 ${sp(6)}pt;">${esc(("Week " + (d.week || "") + " " + (d.study || "") + " Community Group Packet").replace(/\s+/g, " ").trim()).toUpperCase()}</p>`;
+  // Leader details
+  html += hdr("Leader Details", bs, 6);
+  if (has(d.mainIdea)) html += boldLine("Main Idea: " + d.mainIdea);
+  if (has(d.goalTonight)) html += boldLine("Goal Tonight: " + d.goalTonight);
+  // Introduction
+  if (cl(d.introduction).length) { html += hdr("Introduction to " + (d.book || d.study || ""), bs + 1, 10); cl(d.introduction).forEach(p => html += body(p)); }
+  // Form of literature
+  if (cl(d.formOfLiterature).length) { html += hdr("Form of Literature", bs, 10); cl(d.formOfLiterature).forEach(p => html += body(p)); }
+  // Big themes
+  if (cl(d.bigThemes).length) { html += hdr("Big Themes to Watch For", bs, 10); cl(d.bigThemes).forEach(t => html += bullet(t)); }
+  // Icebreaker
+  if (cl(d.icebreakers).length) { html += hdr("Icebreaker (pick 1)", bs, 10); cl(d.icebreakers).forEach(t => html += boldLine(t)); }
+
+  // Sections
+  (d.sections || []).forEach(sec => {
+    const secHead = ("Section " + (sec.ref || "") + " " + (sec.title || "")).replace(/\s+/g, " ").trim();
+    html += hdr(secHead, bs + 1, 12);
+    html += hdr(V + " Passage — Copy and Paste Here", bs, 6);
+    if (has(sec.ref)) html += `<p style="font-family:${B};font-size:${bs}pt;color:${S.bodyColor};margin:${sp(2)}pt 0 0;">${esc((sec.ref + " " + V).toUpperCase())}</p>`;
+    if (has(sec.passageText)) html += body(sec.passageText);
+    else { html += writeLine() + writeLine() + writeLine(); }
+    if (has(sec.leaderSetup)) { html += hdr("Leader Setup (say this)", bs, 8); html += body(sec.leaderSetup); }
+    if (cl(sec.keyNotes).length) { html += hdr("Key Notes (leader only)", bs, 8); cl(sec.keyNotes).forEach(t => html += bullet(t)); }
+    if (has(sec.transition)) { html += hdr("Transition Into Questions", bs, 8); html += body(sec.transition); }
+    const qs = (sec.questions || []).filter(q => has(q.q) || has(q.a) || has(q.simplified));
+    if (qs.length) {
+      html += hdr("Questions (choose what fits)", bs, 8);
+      qs.forEach(q => {
+        if (has(q.q)) html += boldLine("Q: " + q.q);
+        if (has(q.a)) html += boldLine("A: " + q.a);
+        if (has(q.simplified)) html += boldLine("Q Simplified: " + q.simplified);
+      });
+    }
+    if (has(sec.summary)) { html += hdr("Section Summary", bs, 8); html += body(sec.summary); }
+  });
+
+  // Closing reflection
+  const c = d.closing || {};
+  if (has(c.q) || has(c.a) || has(c.simplified)) {
+    html += hdr("Closing Reflection", bs, 12);
+    if (has(c.q)) html += boldLine("Q: " + c.q);
+    if (has(c.a)) html += boldLine("A: " + c.a);
+    if (has(c.simplified)) html += boldLine("Q Simplified: " + c.simplified);
+  }
+  return html;
+}
+
+function buildStudyContent(d, S, K) {
   const sp = n => Math.max(0, +(n * K).toFixed(1));
   const tw = b => b ? "bold" : "normal";
   const ruleTop = `2px solid #c9cfdd`;
@@ -783,55 +1211,87 @@ function buildDocumentXml(d, S, K, ls, mg) {
   }
   const hr = () => para("", { border: true, borderColor: "c9cfdd", borderSz: 12, after: sp(12), before: sp(12) });
 
-  const blocks = [];
+  function studyBlocks() {
+    const blocks = [];
+    // 1. TITLE
+    let title = para(run(d.study || "Study Title", { font: S.titleFont, size: S.titleSize, bold: S.titleBold, color: S.titleColor }), { align: "center", after: sp(4) });
+    if (has(d.week)) title += para(run(d.week.toUpperCase(), { font: S.headingFont, size: Math.max(8, S.bodySize - 1), bold: true, color: S.accentColor }), { align: "center", after: sp(8) });
+    if (has(d.description)) title += para(brun(d.description, { italic: true, size: S.bodySize + 1 }), { align: "center", after: 0 });
+    blocks.push(title);
+    // 2. WEEKLY UPDATES
+    let updates = heading("Weekly Updates");
+    if (d.announcements.length) { updates += label("Announcements"); updates += d.announcements.map(a => para(brun("•  " + a), { indent: 360, hanging: 200, after: sp(3) })).join(""); }
+    if (has(d.iceBreaker)) { updates += label("Ice Breaker"); updates += para(brun(d.iceBreaker), { after: 0 }); }
+    if (has(d.focusInward) || has(d.focusOutward)) { updates += label("Last Week's Growth Focus"); updates += focusBox(d.focusInward, d.focusOutward); }
+    blocks.push(updates);
+    // 3. BODY SEGMENTS
+    if (d.segments.length) {
+      let body = heading("Scripture & Discussion");
+      d.segments.forEach((seg, idx) => {
+        if (idx > 0) body += para("", { border: true, borderColor: "dde1ea", borderSz: 6, after: sp(8), before: sp(8) });
+        if (has(seg.passage)) {
+          body += para(run(seg.passage, { font: S.titleFont, size: Math.round(S.bodySize * 1.35), bold: true, color: S.titleColor }), { after: sp(1) });
+          body += para(run("Read together: " + seg.passage, { font: S.headingFont, size: Math.max(8, S.bodySize - 2), italic: true, color: "4a5163" }), { after: sp(4) });
+        }
+        if (has(seg.scriptureText)) body += box(para(brun(seg.scriptureText, { italic: true }), { after: 0 }), "f7f8fb", hex(S.accentColor));
+        if (has(seg.summary)) { body += label("Summary"); body += para(brun(seg.summary), { after: 0 }); }
+        if (has(seg.leaderNotes)) body += box(label("Key Notes for Leaders") + para(brun(seg.leaderNotes), { after: 0 }), "fbf5e9", hex(S.accentColor));
+        if (has(seg.transition)) body += para(brun(seg.transition, { italic: true, color: "4a5163" }), { before: sp(8), after: 0 });
+        if (seg.questions.length) { body += label("Questions"); body += seg.questions.map((q, i) => para(brun((i + 1) + ".  " + q), { indent: 360, hanging: 240, after: sp(4) })).join(""); }
+        if (seg.relatedVerses.length) { body += label("Related Verses"); body += para(brun(seg.relatedVerses.join("     •     "), { color: "4a5163" }), { after: 0 }); }
+      });
+      blocks.push(body);
+    }
+    // 4. CLOSING PRAYER
+    if (d.prayerPoints.length) {
+      let pr = heading("Closing Prayer Points");
+      pr += d.prayerPoints.map(p => para(brun("•  " + p), { indent: 360, hanging: 200, after: sp(3) })).join("");
+      blocks.push(pr);
+    }
+    // 5. GROWTH STEPS
+    if (has(d.nextInward) || has(d.nextOutward)) blocks.push(heading("Growth Steps for Next Week") + focusBox(d.nextInward, d.nextOutward));
+    return blocks;
+  }
 
-  // 1. TITLE
-  let title = para(run(d.study || "Study Title", { font: S.titleFont, size: S.titleSize, bold: S.titleBold, color: S.titleColor }), { align: "center", after: sp(4) });
-  if (has(d.week)) title += para(run(d.week.toUpperCase(), { font: S.headingFont, size: Math.max(8, S.bodySize - 1), bold: true, color: S.accentColor }), { align: "center", after: sp(8) });
-  if (has(d.description)) title += para(brun(d.description, { italic: true, size: S.bodySize + 1 }), { align: "center", after: 0 });
-  blocks.push(title);
-
-  // 2. WEEKLY UPDATES
-  let updates = heading("Weekly Updates");
-  if (d.announcements.length) { updates += label("Announcements"); updates += d.announcements.map(a => para(brun("•  " + a), { indent: 360, hanging: 200, after: sp(3) })).join(""); }
-  if (has(d.iceBreaker)) { updates += label("Ice Breaker"); updates += para(brun(d.iceBreaker), { after: 0 }); }
-  if (has(d.focusInward) || has(d.focusOutward)) { updates += label("Last Week's Growth Focus"); updates += focusBox(d.focusInward, d.focusOutward); }
-  blocks.push(updates);
-
-  // 3. BODY SEGMENTS
-  if (d.segments.length) {
-    let body = heading("Scripture & Discussion");
-    d.segments.forEach((seg, idx) => {
-      if (idx > 0) body += para("", { border: true, borderColor: "dde1ea", borderSz: 6, after: sp(8), before: sp(8) });
-      if (has(seg.passage)) {
-        body += para(run(seg.passage, { font: S.titleFont, size: Math.round(S.bodySize * 1.35), bold: true, color: S.titleColor }), { after: sp(1) });
-        body += para(run("Read together: " + seg.passage, { font: S.headingFont, size: Math.max(8, S.bodySize - 2), italic: true, color: "4a5163" }), { after: sp(4) });
-      }
-      if (has(seg.scriptureText)) body += box(para(brun(seg.scriptureText, { italic: true }), { after: 0 }), "f7f8fb", hex(S.accentColor));
-      if (has(seg.summary)) { body += label("Summary"); body += para(brun(seg.summary), { after: 0 }); }
-      if (has(seg.leaderNotes)) body += box(label("Key Notes for Leaders") + para(brun(seg.leaderNotes), { after: 0 }), "fbf5e9", hex(S.accentColor));
-      if (has(seg.transition)) body += para(brun(seg.transition, { italic: true, color: "4a5163" }), { before: sp(8), after: 0 });
-      if (seg.questions.length) { body += label("Questions"); body += seg.questions.map((q, i) => para(brun((i + 1) + ".  " + q), { indent: 360, hanging: 240, after: sp(4) })).join(""); }
-      if (seg.relatedVerses.length) { body += label("Related Verses"); body += para(brun(seg.relatedVerses.join("     •     "), { color: "4a5163" }), { after: 0 }); }
+  function packetBlocks() {
+    const bs = S.bodySize, V = (d.passageVersion || "ESV"), cl = cleanList, out = [];
+    const pkHdr = (t, size, mt) => para(run(String(t).toUpperCase(), { font: S.headingFont, size: size, bold: true, color: S.headingColor }), { before: sp(mt), after: sp(3) });
+    const pkBody = t => para(brun(t), { after: sp(4) });
+    const pkBold = t => para(brun(t, { bold: true }), { after: sp(2) });
+    const pkBullet = t => para(brun("•  " + t, { bold: true }), { indent: 360, hanging: 200, after: sp(2) });
+    const pkLine = () => para("", { border: true, borderColor: "999999", borderSz: 6, after: sp(6), before: sp(6) });
+    out.push(para(run(("Week " + (d.week || "") + " " + (d.study || "") + " Community Group Packet").replace(/\s+/g, " ").trim().toUpperCase(), { font: S.titleFont, size: S.titleSize, bold: true, color: S.titleColor }), { after: sp(6) }));
+    let led = pkHdr("Leader Details", bs, 6);
+    if (has(d.mainIdea)) led += pkBold("Main Idea: " + d.mainIdea);
+    if (has(d.goalTonight)) led += pkBold("Goal Tonight: " + d.goalTonight);
+    out.push(led);
+    if (cl(d.introduction).length) { let x = pkHdr("Introduction to " + (d.book || d.study || ""), bs + 1, 10); cl(d.introduction).forEach(p => x += pkBody(p)); out.push(x); }
+    if (cl(d.formOfLiterature).length) { let x = pkHdr("Form of Literature", bs, 10); cl(d.formOfLiterature).forEach(p => x += pkBody(p)); out.push(x); }
+    if (cl(d.bigThemes).length) { let x = pkHdr("Big Themes to Watch For", bs, 10); cl(d.bigThemes).forEach(t => x += pkBullet(t)); out.push(x); }
+    if (cl(d.icebreakers).length) { let x = pkHdr("Icebreaker (pick 1)", bs, 10); cl(d.icebreakers).forEach(t => x += pkBold(t)); out.push(x); }
+    (d.sections || []).forEach(sec => {
+      let x = pkHdr(("Section " + (sec.ref || "") + " " + (sec.title || "")).replace(/\s+/g, " ").trim(), bs + 1, 12);
+      x += pkHdr(V + " Passage — Copy and Paste Here", bs, 6);
+      if (has(sec.ref)) x += para(brun((sec.ref + " " + V).toUpperCase()), { after: sp(2) });
+      if (has(sec.passageText)) x += pkBody(sec.passageText); else x += pkLine() + pkLine() + pkLine();
+      if (has(sec.leaderSetup)) { x += pkHdr("Leader Setup (say this)", bs, 8); x += pkBody(sec.leaderSetup); }
+      if (cl(sec.keyNotes).length) { x += pkHdr("Key Notes (leader only)", bs, 8); cl(sec.keyNotes).forEach(t => x += pkBullet(t)); }
+      if (has(sec.transition)) { x += pkHdr("Transition Into Questions", bs, 8); x += pkBody(sec.transition); }
+      const qs = (sec.questions || []).filter(q => has(q.q) || has(q.a) || has(q.simplified));
+      if (qs.length) { x += pkHdr("Questions (choose what fits)", bs, 8); qs.forEach(q => { if (has(q.q)) x += pkBold("Q: " + q.q); if (has(q.a)) x += pkBold("A: " + q.a); if (has(q.simplified)) x += pkBold("Q Simplified: " + q.simplified); }); }
+      if (has(sec.summary)) { x += pkHdr("Section Summary", bs, 8); x += pkBody(sec.summary); }
+      out.push(x);
     });
-    blocks.push(body);
+    const c = d.closing || {};
+    if (has(c.q) || has(c.a) || has(c.simplified)) { let x = pkHdr("Closing Reflection", bs, 12); if (has(c.q)) x += pkBold("Q: " + c.q); if (has(c.a)) x += pkBold("A: " + c.a); if (has(c.simplified)) x += pkBold("Q Simplified: " + c.simplified); out.push(x); }
+    return out;
   }
 
-  // 4. CLOSING PRAYER
-  if (d.prayerPoints.length) {
-    let pr = heading("Closing Prayer Points");
-    pr += d.prayerPoints.map(p => para(brun("•  " + p), { indent: 360, hanging: 200, after: sp(3) })).join("");
-    blocks.push(pr);
-  }
-
-  // 5. GROWTH STEPS
-  if (has(d.nextInward) || has(d.nextOutward)) {
-    blocks.push(heading("Growth Steps for Next Week") + focusBox(d.nextInward, d.nextOutward));
-  }
-
+  const isPacket = currentTemplate === "packet";
+  const blocks = isPacket ? packetBlocks() : studyBlocks();
   const mgTw = Math.round(mg * 1440);
   const sect = `<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="${mgTw}" w:right="${mgTw}" w:bottom="${mgTw}" w:left="${mgTw}" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>`;
-  const bodyXml = blocks.join(hr()) + para("", { after: 0 }) + sect;
+  const bodyXml = blocks.join(isPacket ? "" : hr()) + para("", { after: 0 }) + sect;
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${bodyXml}</w:body></w:document>`;
 }
 
@@ -1037,9 +1497,21 @@ document.getElementById("btnPrint").addEventListener("click", exportPDF);
 document.getElementById("btnDownloadDoc").addEventListener("click", downloadDoc);
 document.getElementById("btnDownloadDocx").addEventListener("click", exportDocx);
 
+// Template selector — switches structure (and, for the packet, its matching styling)
+document.getElementById("templateSelect").addEventListener("change", (e) => {
+  const next = e.target.value === "packet" ? "packet" : "study";
+  if (next === currentTemplate) return;
+  if (!confirm('Switch to the "' + (next === "packet" ? "Luke's Packet" : "Study Guide") + '" template? This loads its example and replaces what\'s on screen.')) {
+    e.target.value = currentTemplate; return;
+  }
+  currentTemplate = next; saveTemplate();
+  if (next === "packet" && profiles.list["Luke's Packet"]) applyProfile("Luke's Packet");
+  fillForm(structuredClone(templateExample())); autosave();
+});
+
 // Content toolbar: open / save / example / clear
-document.getElementById("btnClear").addEventListener("click", () => { if (confirm("Clear the form and start blank?")) { fillForm(structuredClone(BLANK)); autosave(); } });
-document.getElementById("btnExample").addEventListener("click", () => { if (confirm("Load the example guide? This replaces what's on screen.")) { fillForm(structuredClone(EXAMPLE)); autosave(); } });
+document.getElementById("btnClear").addEventListener("click", () => { if (confirm("Clear the form and start blank?")) { fillForm(structuredClone(templateBlank())); autosave(); } });
+document.getElementById("btnExample").addEventListener("click", () => { if (confirm("Load the example? This replaces what's on screen.")) { fillForm(structuredClone(templateExample())); autosave(); } });
 document.getElementById("btnSaveGuide").addEventListener("click", () => {
   const d = collect();
   downloadBlob(new Blob([JSON.stringify(d, null, 2)], { type: "application/json" }), fileName(d, "studyguide.json"));
@@ -1050,8 +1522,12 @@ document.getElementById("guideFile").addEventListener("change", (e) => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    try { fillForm(normalizeContent(JSON.parse(reader.result))); autosave(); showToast("Guide loaded"); }
-    catch (err) { alert("Sorry, that file couldn't be read as a saved guide."); }
+    try {
+      const parsed = JSON.parse(reader.result);
+      currentTemplate = templateOf(parsed); saveTemplate();
+      document.getElementById("templateSelect").value = currentTemplate;
+      fillForm(normalizeContent(parsed)); autosave(); showToast("Guide loaded");
+    } catch (err) { alert("Sorry, that file couldn't be read as a saved guide."); }
   };
   reader.readAsText(file); e.target.value = "";
 });
@@ -1132,7 +1608,10 @@ function normalizeProfile(p) {
    ===================================================================== */
 (function init() {
   // content: restore auto-saved guide if present, else load the example
-  fillForm(loadContent() || structuredClone(EXAMPLE));
+  const saved = loadContent();
+  if (saved) currentTemplate = templateOf(saved);
+  document.getElementById("templateSelect").value = currentTemplate;
+  fillForm(saved ? normalizeContent(saved) : structuredClone(templateExample()));
   // style + layout: restore last-used working values, else the active profile
   const w = loadWorking();
   if (w && w.style) {

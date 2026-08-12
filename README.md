@@ -78,6 +78,8 @@ browser, so it's there next time. Switch profiles from the dropdown, update one 
 - **Classic** — the default.
 - **Ink Saver** — smaller, black, tightly spaced to save toner and paper.
 - **Large Print** — bigger type and roomier spacing for easier reading.
+- **Community Group Packet** — Arial, all-black, bold uppercase headers with tight
+  margins and 1.15 line spacing, matching a dense leader-packet layout.
 
 **Moving profiles between computers:** profiles live in one browser on one device. Use
 **Export…** to download all your profiles as a small `.json` file, and **Import…** on

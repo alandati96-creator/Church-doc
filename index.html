@@ -288,7 +288,10 @@ const DEFAULT_LAYOUT = { compact: 1.0, lineSpacing: 1.5, margin: 0.9 };
 const BUILTIN_PROFILES = {
   "Classic":     Object.assign({}, DEFAULT_STYLE, DEFAULT_LAYOUT),
   "Ink Saver":   { titleFont:"Calibri", titleSize:18, titleColor:"#000000", titleBold:true, headingFont:"Calibri", headingSize:10, headingColor:"#000000", headingBold:true, bodyFont:"Calibri", bodySize:10, bodyColor:"#000000", accentColor:"#444444", compact:0.7, lineSpacing:1.15, margin:0.5 },
-  "Large Print": { titleFont:"Georgia", titleSize:28, titleColor:"#3a4a7a", titleBold:true, headingFont:"Arial", headingSize:14, headingColor:"#3a4a7a", headingBold:true, bodyFont:"Georgia", bodySize:14, bodyColor:"#1f2430", accentColor:"#b07a2f", compact:1.25, lineSpacing:1.7, margin:1.0 }
+  "Large Print": { titleFont:"Georgia", titleSize:28, titleColor:"#3a4a7a", titleBold:true, headingFont:"Arial", headingSize:14, headingColor:"#3a4a7a", headingBold:true, bodyFont:"Georgia", bodySize:14, bodyColor:"#1f2430", accentColor:"#b07a2f", compact:1.25, lineSpacing:1.7, margin:1.0 },
+  // Matches the "Community Group Packet" .docx: Arial, all-black, bold uppercase
+  // headers, tight margins and 1.15 line spacing — a dense, paper-efficient leader packet.
+  "Community Group Packet": { titleFont:"Arial", titleSize:20, titleColor:"#000000", titleBold:true, headingFont:"Arial", headingSize:12, headingColor:"#000000", headingBold:true, bodyFont:"Arial", bodySize:11, bodyColor:"#000000", accentColor:"#000000", compact:0.8, lineSpacing:1.15, margin:0.6 }
 };
 
 /* =====================================================================
@@ -391,13 +394,15 @@ let lineSpacing = DEFAULT_LAYOUT.lineSpacing;
 let margin = DEFAULT_LAYOUT.margin;
 
 function loadProfiles() {
-  try {
-    const raw = localStorage.getItem(KEY_PROFILES);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
-  const seed = { list: structuredClone(BUILTIN_PROFILES), active: "Classic" };
-  saveProfiles(seed);
-  return seed;
+  let p = null;
+  try { const raw = localStorage.getItem(KEY_PROFILES); if (raw) p = JSON.parse(raw); } catch (e) {}
+  if (!p || !p.list) p = { list: structuredClone(BUILTIN_PROFILES), active: "Classic" };
+  else {
+    // Add any built-in profiles this browser doesn't have yet, keeping the user's own.
+    Object.keys(BUILTIN_PROFILES).forEach(name => { if (!p.list[name]) p.list[name] = structuredClone(BUILTIN_PROFILES[name]); });
+  }
+  saveProfiles(p);
+  return p;
 }
 function saveProfiles(p) { try { localStorage.setItem(KEY_PROFILES, JSON.stringify(p)); } catch (e) {} }
 let profiles = loadProfiles();

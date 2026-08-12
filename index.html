@@ -863,7 +863,8 @@ const PACKET_BLANK = {
    ===================================================================== */
 const KEY_WORKING = "churchStudyGuide.working.v3";     // last-used style + layout
 const KEY_PROFILES = "churchStudyGuide.profiles.v3";   // saved named profiles
-const KEY_CONTENT = "churchStudyGuide.content.v1";     // auto-saved guide content
+const CONTENT_PREFIX = "churchStudyGuide.content.v2."; // auto-saved content, per template
+function contentKey(t) { return CONTENT_PREFIX + (t === "packet" ? "packet" : "study"); }
 const KEY_TRANS = "churchStudyGuide.translation.v1";   // last-used Bible translation
 const KEY_TEMPLATE = "churchStudyGuide.template.v1";   // selected template
 
@@ -907,17 +908,18 @@ let contentTimer;
 function autosave() {
   clearTimeout(contentTimer);
   contentTimer = setTimeout(() => {
-    try { localStorage.setItem(KEY_CONTENT, JSON.stringify(collect())); } catch (e) {}
+    try { localStorage.setItem(contentKey(currentTemplate), JSON.stringify(collect())); } catch (e) {}
     flashSaved();
     if (document.getElementById("panel-styling").classList.contains("active")) renderPreview();
   }, 300);
 }
+function saveContentNow() { try { localStorage.setItem(contentKey(currentTemplate), JSON.stringify(collect())); } catch (e) {} }
 function flashSaved() {
   const el = document.getElementById("savedState"); if (!el) return;
   el.textContent = "All changes saved"; el.classList.add("flash");
   clearTimeout(flashSaved._t); flashSaved._t = setTimeout(() => el.classList.remove("flash"), 800);
 }
-function loadContent() { try { const raw = localStorage.getItem(KEY_CONTENT); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
+function loadContentFor(t) { try { const raw = localStorage.getItem(contentKey(t)); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function templateOf(d) { return d && d.template === "packet" ? "packet" : "study"; }
 function normalizeContent(d) { return templateOf(d) === "packet" ? normalizePacket(d) : normalizeStudy(d); }
 function normalizeStudy(d) {
@@ -1847,12 +1849,13 @@ document.getElementById("btnDownloadDocx").addEventListener("click", exportDocx)
 document.getElementById("templateSelect").addEventListener("change", (e) => {
   const next = e.target.value === "packet" ? "packet" : "study";
   if (next === currentTemplate) return;
-  if (!confirm('Switch to the "' + (next === "packet" ? "Luke's Packet" : "Study Guide") + '" template? This loads its example and replaces what\'s on screen.')) {
-    e.target.value = currentTemplate; return;
-  }
+  saveContentNow();                       // keep the current template's edits
   currentTemplate = next; saveTemplate();
   if (next === "packet" && profiles.list["Luke's Packet"]) applyProfile("Luke's Packet");
-  fillForm(structuredClone(templateExample())); autosave();
+  // Restore this template's own saved content, or fall back to its example
+  const saved = loadContentFor(next);
+  fillForm(saved ? normalizeContent(saved) : structuredClone(templateExample()));
+  autosave();
 });
 
 // Content toolbar: open / save / example / clear
@@ -1953,9 +1956,8 @@ function normalizeProfile(p) {
    INIT
    ===================================================================== */
 (function init() {
-  // content: restore auto-saved guide if present, else load the example
-  const saved = loadContent();
-  if (saved) currentTemplate = templateOf(saved);
+  // content: restore this template's auto-saved guide if present, else its example
+  const saved = loadContentFor(currentTemplate);
   document.getElementById("templateSelect").value = currentTemplate;
   fillForm(saved ? normalizeContent(saved) : structuredClone(templateExample()));
   // style + layout: restore last-used working values, else the active profile
